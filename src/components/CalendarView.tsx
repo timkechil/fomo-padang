@@ -70,10 +70,10 @@ export default function CalendarView({
     <section className="section">
       <div className="wrap">
         <div className="sec-head">
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div className="calnav">
             <button className="btn btn-sm" aria-label="Bulan sebelumnya"
               onClick={() => go({ month: shiftMonth(-1), d: null })}>←</button>
-            <h2 className="sec-title" style={{ minWidth: 250 }}>{MONL[m - 1]} {y}</h2>
+            <h2 className="sec-title calmonth">{MONL[m - 1]} {y}</h2>
             <button className="btn btn-sm" aria-label="Bulan berikutnya"
               onClick={() => go({ month: shiftMonth(1), d: null })}>→</button>
           </div>

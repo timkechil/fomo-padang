@@ -78,7 +78,15 @@ export default function PlanClient() {
     }
   }
 
-  if (!ready) return null;
+  // Before hydration the plan is unknown (it lives in localStorage), so show
+  // the frame rather than a blank page.
+  if (!ready) {
+    return (
+      <div className="sec-head" aria-live="polite">
+        <span className="skeleton-line" style={{ width: 220, height: 22 }} />
+      </div>
+    );
+  }
 
   if (!items.length) {
     return (

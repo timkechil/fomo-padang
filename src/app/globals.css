@@ -443,3 +443,51 @@ footer.site a:hover{color:var(--orange)}
   font-weight:700;font-size:14px;margin-bottom:16px;color:#8E2415;
 }
 .formnote.ok{background:#E7F5EC;border-color:var(--green);color:#0A5F2A}
+
+/* ============ QA PASS: HIT AREAS & MOBILE TAP TARGETS ============ */
+/* The card already had cursor:pointer, but only its upper half was a link.
+   One stretched overlay makes the whole card — price row included — clickable. */
+.calnav{display:flex;gap:12px;align-items:center}
+/* The filter bar already set data-pending during the server round-trip but
+   nothing styled it, so chips looked unresponsive on slow connections. */
+.filterbar[data-pending="true"] .chiprow{opacity:.55;transition:opacity .12s}
+.filterbar[data-pending="true"]{cursor:progress}
+.calmonth{min-width:250px}
+.card > .card-hit{position:absolute;inset:0;z-index:1;border-radius:var(--r)}
+.card > .card-hit:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.card .plan-add{position:relative;z-index:2}
+
+@media (max-width:860px){
+  /* Touch targets. Visual weight is unchanged on desktop; these only grow
+     the tappable box on phones and tablets. */
+  .plan-add{width:40px;height:40px}
+  .icon-btn{width:44px;height:44px}
+  .chip{display:inline-flex;align-items:center;min-height:44px}
+  .viewtoggle button{min-height:44px}
+  .btn-sm{min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+  button[aria-label^="Bulan"]{min-width:44px;min-height:44px}
+
+  /* Inline text links: grow the hit box without moving the text. */
+  .linkmore{display:inline-block;padding-block:10px;margin-block:-10px}
+  .breadcrumb a{display:inline-block;padding-block:11px;margin-block:-11px}
+  footer.site a{display:inline-block;padding-block:12px;margin-block:-12px}
+  .topbar .logo,footer.site .logo{padding-block:6px}
+
+  /* The map page has no footer, so its result list ran under the fixed
+     bottom nav and the FAB. */
+  .map-side{padding-bottom:118px}
+
+  /* The month title reserved 250px, which pushed the next-month arrow past
+     the right edge on 375px screens. */
+  .calmonth{min-width:0}
+  .calnav{flex-wrap:wrap}
+
+  /* Leaflet ships 30px zoom controls; too small to hit reliably on a phone.
+     Its own rule is .leaflet-touch .leaflet-bar a, so match that specificity. */
+  .leaflet-touch .leaflet-bar a.leaflet-control-zoom-in,
+  .leaflet-touch .leaflet-bar a.leaflet-control-zoom-out,
+  .leaflet-bar a.leaflet-control-zoom-in,
+  .leaflet-bar a.leaflet-control-zoom-out{
+    width:44px;height:44px;line-height:44px;font-size:20px;
+  }
+}

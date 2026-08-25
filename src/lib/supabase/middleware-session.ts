@@ -11,9 +11,27 @@ type CookieList = { name: string; value: string; options?: CookieOptions }[];
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // NEXT_PUBLIC_* values are inlined at build time. If a deployment is built
+  // without them, createServerClient throws — and because this middleware
+  // matches every route, that would turn a config mistake into a site-wide 500.
+  // Degrade instead: public pages still render, and /admin still fails closed.
+  if (!url || !anonKey) {
+    const path = request.nextUrl.pathname;
+    if (path.startsWith('/admin') && path !== '/admin/login') {
+      const to = request.nextUrl.clone();
+      to.pathname = '/admin/login';
+      to.searchParams.set('next', path);
+      return NextResponse.redirect(to);
+    }
+    return response;
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll() {
