@@ -57,6 +57,9 @@ export interface EventRow {
   status: EventStatus;
   featured: boolean;
   submitted_from: string | null;
+  /** V1.2 §16 — public credit copied from the approved submission.
+   *  Denormalised because `event_submissions` is staff-only under RLS. */
+  contributor_name: string | null;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -79,6 +82,8 @@ export interface PlaceRow {
   instagram_url: string | null;
   website_url: string | null;
   cover_image_url: string | null;
+  /** V1.2 §14 — attribution for the cover photo. URL or free text. */
+  source_photo: string | null;
   status: PlaceStatus;
   featured: boolean;
   created_at: string;

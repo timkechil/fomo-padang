@@ -6,6 +6,7 @@ import SiteFooter from '@/components/SiteFooter';
 import PageHead from '@/components/PageHead';
 import { getCategories, getMonthEvents } from '@/lib/queries';
 import { fmtLong, todayWIB } from '@/lib/format';
+import { holidayOn } from '@/lib/holidays';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
@@ -33,6 +34,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
   const selectedList = selected
     ? events.filter((e) => e.start_date <= selected && (e.end_date ?? e.start_date) >= selected)
     : [];
+  const selectedHoliday = selected ? holidayOn(selected) : null;
 
   return (
     <>
@@ -44,11 +46,20 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
         <section className="section" style={{ paddingTop: 0 }}>
           <div className="wrap">
             <h3 className="blockhead">{fmtLong(selected)} · {selectedList.length} acara</h3>
+
+            {selectedHoliday ? (
+              <div className="holiday-row" style={{ marginBottom: 16 }}>
+                <span className="holiday-badge">Libur Nasional</span>
+                <span>{selectedHoliday.name}</span>
+              </div>
+            ) : null}
             {selectedList.length ? (
               <div className="grid">{selectedList.map((e) => <EventCard key={e.id} event={e} />)}</div>
             ) : (
               <EmptyState title="Belum ketemu acaranya 👀">
-                Coba tanggal lain, atau kasih tahu kami acara yang kamu tahu.
+                {selectedHoliday
+                  ? 'Tanggal ini libur nasional, tapi belum ada acara terdaftar. Kasih tahu kami kalau kamu tahu satu.'
+                  : 'Coba tanggal lain, atau kasih tahu kami acara yang kamu tahu.'}
               </EmptyState>
             )}
           </div>

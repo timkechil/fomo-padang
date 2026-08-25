@@ -18,7 +18,7 @@ export default async function AdminPlacesPage() {
 
   return (
     <>
-      <PageHead title="Tempat" eyebrow="Local Spot" />
+      <PageHead title="Tempat" eyebrow="Spot Lokal & tempat lainnya" />
       <section className="section">
         <div className="wrap">
           <div className="sec-head">
@@ -29,7 +29,7 @@ export default async function AdminPlacesPage() {
           {places.length === 0 ? (
             <EmptyState title="Belum ada tempat"
               action={{ href: '/admin/places/new', label: 'Tambah tempat' }}>
-              Local Spot tidak lewat antrean moderasi — tim FOMO yang menulis langsung.
+              Tempat tidak lewat antrean moderasi — tim FOMO yang menulis langsung.
             </EmptyState>
           ) : (
             <table className="table">

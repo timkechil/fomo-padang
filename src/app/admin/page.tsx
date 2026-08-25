@@ -33,7 +33,7 @@ export default async function AdminDashboard() {
               <div className="s-lab">Perlu ditinjau</div>
             </div>
             <div className="stat"><div className="s-num">{stats.publishedPlaces}</div>
-              <div className="s-lab">Local Spot</div></div>
+              <div className="s-lab">Tempat tayang</div></div>
           </div>
 
           <div className="sec-head">

@@ -15,8 +15,21 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+/** Display handle for a stored Instagram URL. Never built from free text —
+ *  if there is no URL there is no handle (V1.2 §6). */
+function igHandle(url: string): string {
+  try {
+    const path = new URL(url).pathname.replace(/^\/+|\/+$/g, '');
+    return path ? `@${path.split('/')[0]}` : 'Instagram';
+  } catch {
+    return 'Instagram';
+  }
+}
+
 type Params = Promise<{ slug: string }>;
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fomopadang.id';
+import { siteUrl as resolveSiteUrl } from '@/lib/site-url';
+
+const siteUrl = resolveSiteUrl();
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
@@ -147,6 +160,9 @@ export default async function EventDetail({ params }: { params: Params }) {
                 <div><dt>HTM</dt><dd>{fmtPrice(e.price_type, e.price_amount)}</dd></div>
                 <div><dt>Penyelenggara</dt><dd>{e.organizer?.name ?? 'Belum tercatat'}</dd></div>
                 <div><dt>Untuk</dt><dd>{e.audience ?? 'Semua Umur'}</dd></div>
+                {e.contributor_name ? (
+                  <div><dt>Kontributor</dt><dd>{e.contributor_name}</dd></div>
+                ) : null}
               </dl>
 
               <div className="actions">
@@ -162,7 +178,7 @@ export default async function EventDetail({ params }: { params: Params }) {
                     <Icon name="pin" size={16} /> Buka Maps
                   </a>
                 ) : null}
-                <ShareButton title={e.title} />
+                <ShareButton title={e.title} path={`/event/${e.slug}`} />
                 {e.ticket_url && !past ? (
                   <a className="btn btn-ink" target="_blank" rel="noopener noreferrer" href={e.ticket_url}>
                     <Icon name="ticket" size={16} /> Beli / Daftar
@@ -257,10 +273,20 @@ export default async function EventDetail({ params }: { params: Params }) {
               <h3 style={{ fontSize: 13, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 10 }}>
                 Penyelenggara
               </h3>
-              <p style={{ fontWeight: 800, marginBottom: 6 }}>{e.organizer.name}</p>
-              {e.organizer.instagram_url || e.organizer.website_url ? (
+              {e.organizer.instagram_url ? (
+                <a href={e.organizer.instagram_url} target="_blank" rel="noopener noreferrer"
+                  className="organizer-link">
+                  <span className="organizer-name">{e.organizer.name}</span>
+                  <span className="organizer-handle">
+                    <Icon name="instagram" size={14} /> {igHandle(e.organizer.instagram_url)}
+                  </span>
+                </a>
+              ) : (
+                <p style={{ fontWeight: 800, marginBottom: 6 }}>{e.organizer.name}</p>
+              )}
+              {!e.organizer.instagram_url && e.organizer.website_url ? (
                 <a className="btn btn-sm btn-block" target="_blank" rel="noopener noreferrer"
-                  href={e.organizer.instagram_url ?? e.organizer.website_url!}>
+                  href={e.organizer.website_url}>
                   <Icon name="external" size={15} /> Profil penyelenggara
                 </a>
               ) : null}

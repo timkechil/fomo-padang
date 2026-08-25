@@ -11,7 +11,7 @@ export default async function NewPlacePage() {
 
   return (
     <>
-      <PageHead title="Tempat baru" eyebrow="Local Spot" crumb="Tempat" />
+      <PageHead title="Tempat baru" eyebrow="Tempat" crumb="Tempat" />
       <section className="section">
         <div className="wrap" style={{ maxWidth: 880 }}>
           <PlaceForm categories={categories.filter((c) => c.type === 'place')} />

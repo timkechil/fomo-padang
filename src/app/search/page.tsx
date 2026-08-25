@@ -6,6 +6,7 @@ import EmptyState from '@/components/EmptyState';
 import PosterVisual from '@/components/PosterVisual';
 import { searchPublic } from '@/lib/queries';
 import { fmtPrice, fmtShort, fmtTime } from '@/lib/format';
+import { SPOT_LABEL } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Cari', robots: { index: false } };
@@ -81,7 +82,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
                         posterUrl={h.poster_url} />
                     </div>
                     <div className="pc-body">
-                      <span className="pc-tag">Local Spot · {h.district ?? 'Padang'}</span>
+                      <span className="pc-tag">{h.category_name ?? SPOT_LABEL} · {h.district ?? 'Padang'}</span>
                       <h3>{h.title}</h3>
                       <span className="pc-meta">{h.subtitle ?? ''}</span>
                     </div>

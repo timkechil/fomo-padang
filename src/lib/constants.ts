@@ -15,7 +15,22 @@ export const DISTRICTS = [
   'Pauh', 'Kuranji', 'Nanggalo', 'Lubuk Begalung', 'Lubuk Kilangan', 'Bungus Teluk Kabung',
 ] as const;
 
-export const AUDIENCES = ['Semua Umur', 'Anak', 'Keluarga', 'Pelajar', 'Mahasiswa'] as const;
+export const AUDIENCES = [
+  'Semua Umur', 'Anak', 'Keluarga', 'Pelajar', 'Mahasiswa', 'Dewasa',
+] as const;
+
+/** Public place categories (V1.2 §12). Slugs match the `categories` rows
+ *  created in migration 0005 — display labels live here, slugs never change. */
+export const PLACE_CATEGORIES = [
+  { slug: 'spot', name: 'Spot Lokal' },
+  { slug: 'tempat-makan', name: 'Tempat Makan' },
+  { slug: 'tempat-nongkrong', name: 'Tempat Nongkrong' },
+  { slug: 'toko-oleh-oleh', name: 'Toko Oleh-Oleh' },
+] as const;
+
+/** V1.2 §11: "Local Spot" is retired from user-facing copy. The category slug
+ *  stays `spot` so existing rows, URLs and relations are untouched. */
+export const SPOT_LABEL = 'Spot Lokal';
 
 export const DISTRICT_CENTER: Record<string, [number, number]> = {
   'Padang Barat': [-0.9481, 100.3616],

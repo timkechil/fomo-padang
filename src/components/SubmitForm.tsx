@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Icon from './Icon';
 import { AUDIENCES, DISTRICTS } from '@/lib/constants';
 import type { CategoryRow } from '@/lib/types';
@@ -16,8 +16,27 @@ export default function SubmitForm({ categories }: { categories: CategoryRow[] }
   const [formError, setFormError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  /**
+   * V1.2 bug #9 — the form submitted while people were still filling it in.
+   *
+   * Root cause: a single-visible-input HTML form submits implicitly when Enter
+   * is pressed in any text field, and mobile keyboards map their Go/Next/Done
+   * key to exactly that. Nothing in the code called submit — the browser did.
+   *
+   * Fix: the submit path is gated on an explicit press of the send button.
+   * `submitIntent` is only ever set by that button's own pointer/click handler,
+   * and is cleared immediately after being read, so an implicit submission —
+   * from Enter, a keyboard Go key, a dropdown, or a date picker — is ignored.
+   */
+  const submitIntent = useRef(false);
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    const intentional = submitIntent.current;
+    submitIntent.current = false;
+    if (!intentional) return;              // implicit submit: ignore entirely
+
     if (busy) return;                      // guards double submits
     setBusy(true);
     setErrors({});
@@ -62,7 +81,19 @@ export default function SubmitForm({ categories }: { categories: CategoryRow[] }
   const invalid = (name: string) => (errors[name] ? true : undefined);
 
   return (
-    <form className="formcard" onSubmit={onSubmit} noValidate>
+    <form
+      className="formcard"
+      onSubmit={onSubmit}
+      noValidate
+      onKeyDown={(e) => {
+        // Enter inside a textarea is a newline; anywhere else in this form it
+        // would trigger an implicit submit, so stop it before it starts.
+        const target = e.target as HTMLElement;
+        if (e.key === 'Enter' && target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+        }
+      }}
+    >
       {formError ? <div className="formnote" role="alert">{formError}</div> : null}
 
       <h3 className="blockhead">Yang wajib diisi</h3>
@@ -212,7 +243,13 @@ export default function SubmitForm({ categories }: { categories: CategoryRow[] }
         Nggak tahu semuanya? Nggak apa-apa. Kirim yang kamu tahu, tim FOMO akan cek sisanya.
       </div>
 
-      <button className="btn btn-primary btn-block" type="submit" style={{ padding: 15 }} disabled={busy}>
+      <button
+        className="btn btn-primary btn-block"
+        type="submit"
+        style={{ padding: 15 }}
+        disabled={busy}
+        onClick={() => { submitIntent.current = true; }}
+      >
         <Icon name="send" size={16} /> {busy ? 'Mengirim…' : 'Kirim ke Tim FOMO'}
       </button>
       <p className="sec-note" style={{ marginTop: 12, textAlign: 'center' }}>

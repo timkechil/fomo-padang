@@ -1,7 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { createClient } from '@/lib/supabase/server';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fomopadang.id';
+import { siteUrl as resolveSiteUrl } from '@/lib/site-url';
+
+const siteUrl = resolveSiteUrl();
 
 export const revalidate = 3600;
 

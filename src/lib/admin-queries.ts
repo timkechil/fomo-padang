@@ -126,6 +126,19 @@ export async function listActivityLog(limit = 20) {
   }[];
 }
 
+/** V1.2 §7 — how many events use each category, so the UI can warn before
+ *  deactivating one and can justify never offering a hard delete. */
+export async function countCategoryUsage() {
+  const supabase = await createClient();
+  const { data } = await supabase.from('event_categories').select('category_id');
+  const counts = new Map<string, number>();
+  (data ?? []).forEach((r) => {
+    const id = (r as { category_id: string }).category_id;
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  });
+  return counts;
+}
+
 export async function countOrganizerEvents() {
   const supabase = await createClient();
   const { data } = await supabase.from('events').select('organizer_id');

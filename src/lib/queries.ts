@@ -1,4 +1,5 @@
 import { createClient } from './supabase/server';
+import { SPOT_LABEL } from './constants';
 import {
   todayWIB, addDays, weekendRange, monthBounds,
 } from './format';
@@ -15,7 +16,7 @@ const EVENT_SELECT = `
   venue_name, address, district, latitude, longitude,
   price_type, price_amount, ticket_url, source_url, instagram_url, poster_url,
   registration_required, audience, status, featured, submitted_from,
-  published_at, created_at, updated_at,
+  contributor_name, published_at, created_at, updated_at,
   organizer:organizers ( id, name, slug, instagram_url, website_url ),
   event_categories ( is_primary, categories ( id, name, slug, color ) )
 `;
@@ -53,6 +54,11 @@ export async function getCategories(type: 'event' | 'place' | 'all' = 'event'): 
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as CategoryRow[];
+}
+
+/** Active place categories, for the public Places filter (V1.2 §13). */
+export async function getPlaceCategories(): Promise<CategoryRow[]> {
+  return getCategories('place');
 }
 
 export async function getOrganizers(): Promise<OrganizerRow[]> {
@@ -283,12 +289,12 @@ export async function getMonthEvents(month: string, catSlug?: string): Promise<E
 const PLACE_SELECT = `
   id, slug, name, description, tips, category_id, address, district,
   latitude, longitude, opening_hours, admission_type, admission_price,
-  instagram_url, website_url, cover_image_url, status, featured,
+  instagram_url, website_url, cover_image_url, source_photo, status, featured,
   created_at, updated_at,
   category:categories ( id, name, color )
 `;
 
-export async function getPlaces(limit = 40, q?: string): Promise<PlaceView[]> {
+export async function getPlaces(limit = 40, q?: string, catSlug?: string): Promise<PlaceView[]> {
   const supabase = await createClient();
   let query = supabase
     .from('places')
@@ -297,6 +303,15 @@ export async function getPlaces(limit = 40, q?: string): Promise<PlaceView[]> {
     .order('featured', { ascending: false })
     .order('name')
     .limit(limit);
+
+  // V1.2 §13 — filter by place category, resolved through the existing
+  // categories table rather than a second hard-coded list.
+  if (catSlug && catSlug !== 'semua') {
+    const { data: cat } = await supabase
+      .from('categories').select('id').eq('slug', catSlug).eq('type', 'place').maybeSingle();
+    if (!cat) return [];
+    query = query.eq('category_id', (cat as { id: string }).id);
+  }
 
   if (q) {
     const term = q.replace(/[%,()]/g, ' ').trim();
@@ -406,7 +421,7 @@ async function placePins(f: PublicFilters & { includePlaces?: boolean }): Promis
       start_date: null, start_time: null, venue_name: r.address,
       poster_url: r.cover_image_url,
       price_type: r.admission_type, price_amount: r.admission_price,
-      category_name: 'Local Spot', category_color: '#161616',
+      category_name: SPOT_LABEL, category_color: '#161616',
     };
   });
 }

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import PosterUploader from './PosterUploader';
+import OrganizerPicker from './OrganizerPicker';
+import CoordHelp from './CoordHelp';
 import { AUDIENCES, DISTRICTS } from '@/lib/constants';
 import type { CategoryRow, OrganizerRow } from '@/lib/types';
 
@@ -65,13 +67,7 @@ export default function EventFields({
       </div>
 
       <div className="formgrid">
-        <div className="field">
-          <label htmlFor="f-org">Penyelenggara</label>
-          <select id="f-org" name="organizer_id" defaultValue={defaults.organizer_id ?? ''}>
-            <option value="">— belum ditentukan —</option>
-            {organizers.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-          </select>
-        </div>
+        <OrganizerPicker organizers={organizers} defaultValue={defaults.organizer_id} />
 
         <div className="field">
           <label htmlFor="f-slug">Slug URL</label>
@@ -127,13 +123,13 @@ export default function EventFields({
         </div>
 
         <div className="field">
-          <label htmlFor="f-lat">Latitude</label>
+          <label htmlFor="f-lat">Latitude <CoordHelp /></label>
           <input id="f-lat" name="latitude" defaultValue={defaults.latitude ?? ''}
             placeholder="-0.9438" aria-invalid={invalid('latitude')} />
           {err('latitude')}
         </div>
         <div className="field">
-          <label htmlFor="f-lng">Longitude</label>
+          <label htmlFor="f-lng">Longitude <CoordHelp /></label>
           <input id="f-lng" name="longitude" defaultValue={defaults.longitude ?? ''}
             placeholder="100.3595" aria-invalid={invalid('longitude')} />
           {err('longitude')}

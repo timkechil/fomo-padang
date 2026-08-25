@@ -148,7 +148,7 @@ export default async function ExplorePage({ searchParams }: { searchParams: Sear
       <section className="section alt">
         <div className="wrap">
           <div className="sec-head">
-            <h2 className="sec-title">Tempat yang bisa dikunjungi kapan aja</h2>
+            <h2 className="sec-title">Buka setiap saat</h2>
             <Link className="linkmore" href="/places">Semua tempat <Icon name="arrow" size={14} /></Link>
           </div>
           <div className="grid g2 places">{places.map((p) => <PlaceCard key={p.id} place={p} />)}</div>

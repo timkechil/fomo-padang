@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import PosterUploader from './PosterUploader';
+import CoordHelp from './CoordHelp';
 import { DISTRICTS } from '@/lib/constants';
 import { savePlaceAction, type ActionState } from '@/server/admin-actions';
 import type { CategoryRow, PlaceRow } from '@/lib/types';
@@ -68,12 +69,12 @@ export default function PlaceForm({
             defaultValue={place?.opening_hours?.label ?? ''} placeholder="Setiap hari 08.00–18.00" />
         </div>
         <div className="field">
-          <label htmlFor="p-lat">Latitude</label>
+          <label htmlFor="p-lat">Latitude <CoordHelp /></label>
           <input id="p-lat" name="latitude" defaultValue={place?.latitude ?? ''} />
           {err('latitude')}
         </div>
         <div className="field">
-          <label htmlFor="p-lng">Longitude</label>
+          <label htmlFor="p-lng">Longitude <CoordHelp /></label>
           <input id="p-lng" name="longitude" defaultValue={place?.longitude ?? ''} />
           {err('longitude')}
         </div>
@@ -104,6 +105,17 @@ export default function PlaceForm({
         <label>Foto sampul</label>
         <PosterUploader bucket="place-images" value={cover} onChange={setCover} />
         <input type="hidden" name="cover_image_url" value={cover} />
+      </div>
+
+      <div className="field">
+        <label htmlFor="p-source">Source photo</label>
+        <input id="p-source" name="source_photo" defaultValue={place?.source_photo ?? ''}
+          placeholder="https://instagram.com/... atau: Photo by Tim FOMO" />
+        <p className="hint">
+          Dari mana fotonya berasal. Boleh link, boleh teks biasa. Ditampilkan kecil
+          di halaman tempat sebagai kredit.
+        </p>
+        {err('source_photo')}
       </div>
 
       <div className="formgrid">

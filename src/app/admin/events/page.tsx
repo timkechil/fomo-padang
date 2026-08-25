@@ -33,12 +33,16 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
   const filter = (((Array.isArray(sp.filter) ? sp.filter[0] : sp.filter) ?? 'upcoming') as AdminEventFilter);
   const events = await listAdminEvents(filter);
   const today = todayWIB();
+  const deleted = Boolean(Array.isArray(sp.deleted) ? sp.deleted[0] : sp.deleted);
 
   return (
     <>
       <PageHead title="Event" eyebrow="Kurasi & publikasi" />
       <section className="section">
         <div className="wrap">
+          {deleted ? (
+            <div className="formnote ok">Event dihapus permanen dari database.</div>
+          ) : null}
           <div className="sec-head">
             <div className="chiprow">
               {FILTERS.map((f) => (

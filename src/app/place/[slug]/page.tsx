@@ -9,6 +9,7 @@ import SiteFooter from '@/components/SiteFooter';
 import Icon from '@/components/Icon';
 import { getNearbyEvents, getPlaceBySlug } from '@/lib/queries';
 import { fmtPrice, fmtShort, todayWIB } from '@/lib/format';
+import { SPOT_LABEL } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,12 +51,12 @@ export default async function PlaceDetail({ params }: { params: Params }) {
           </p>
           <div className="detail-hero-in">
             <div className="detail-poster">
-              <PosterVisual slug={place.slug} title={place.name} kicker="Local Spot"
+              <PosterVisual slug={place.slug} title={place.name} kicker={place.category?.name ?? SPOT_LABEL}
                 main={place.name} ghostSize="120px" posterUrl={place.cover_image_url} />
             </div>
             <div>
               <span className="badge" style={{ background: 'var(--ink)', border: '1.5px solid #fff' }}>
-                Local Spot
+                {place.category?.name ?? SPOT_LABEL}
               </span>
               {place.status === 'temporarily_closed' ? (
                 <span className="badge" style={{ background: '#E23E2E', marginLeft: 8 }}>Tutup sementara</span>
@@ -78,7 +79,7 @@ export default async function PlaceDetail({ params }: { params: Params }) {
                     <Icon name="pin" size={16} /> Buka Maps
                   </a>
                 ) : null}
-                <ShareButton title={place.name} />
+                <ShareButton title={place.name} path={`/place/${place.slug}`} />
               </div>
             </div>
           </div>
@@ -93,6 +94,16 @@ export default async function PlaceDetail({ params }: { params: Params }) {
             {place.tips ? <p><strong>Tips:</strong> {place.tips}</p> : null}
           </div>
 
+          {place.source_photo ? (
+            <p className="photo-credit">
+              Foto: {/^https?:\/\//.test(place.source_photo) ? (
+                <a href={place.source_photo} target="_blank" rel="noopener noreferrer">
+                  {place.source_photo}
+                </a>
+              ) : place.source_photo}
+            </p>
+          ) : null}
+
           {hasCoords ? (
             <>
               <h2 className="blockhead" style={{ marginTop: 32 }}>Lokasi</h2>
@@ -104,7 +115,7 @@ export default async function PlaceDetail({ params }: { params: Params }) {
                     latitude: place.latitude!, longitude: place.longitude!,
                     start_date: null, start_time: null, venue_name: place.address,
                     poster_url: place.cover_image_url, price_type: place.admission_type,
-                    price_amount: place.admission_price, category_name: 'Local Spot',
+                    price_amount: place.admission_price, category_name: place.category?.name ?? SPOT_LABEL,
                     category_color: '#161616',
                   }]} />
               </div>

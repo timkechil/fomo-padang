@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import Icon from './Icon';
 import { DATE_CHIPS, DISTRICTS, AUDIENCES } from '@/lib/constants';
 import { fmtShort } from '@/lib/format';
@@ -25,11 +26,35 @@ export default function FilterBar({ categories }: { categories: CategoryRow[] })
   const audience = params.get('audience') ?? 'all';
   const q = params.get('q') ?? '';
 
-  const custom = date.startsWith('tgl:');
-  const active = Boolean(q) || date !== 'semua' || cat !== 'semua'
-    || price !== 'all' || area !== 'all' || audience !== 'all';
+  /**
+   * V1.2 #1 — chips used to stay visually unselected until the server round
+   * trip finished, so a tap felt ignored on a slow connection. `optimistic`
+   * paints the new selection on the same frame as the tap; the URL remains
+   * the source of truth and overwrites it once the navigation lands.
+   */
+  const urlState = { date, cat, price, area, audience };
+  const [optimistic, setOptimistic] = useState(urlState);
+  useEffect(() => {
+    setOptimistic({ date, cat, price, area, audience });
+  }, [date, cat, price, area, audience]);
+
+  const sel = pending ? optimistic : urlState;
+
+  const custom = sel.date.startsWith('tgl:');
+  const active = Boolean(q) || sel.date !== 'semua' || sel.cat !== 'semua'
+    || sel.price !== 'all' || sel.area !== 'all' || sel.audience !== 'all';
 
   function apply(next: Record<string, string | null>) {
+    setOptimistic((prev) => ({
+      ...prev,
+      ...Object.fromEntries(
+        Object.entries(next).map(([k, v]) => [
+          k,
+          v ?? (k === 'date' || k === 'cat' ? 'semua' : 'all'),
+        ]),
+      ),
+    }));
+
     const sp = new URLSearchParams(params.toString());
     for (const [k, v] of Object.entries(next)) {
       if (!v || v === 'semua' || v === 'all') sp.delete(k);
@@ -46,15 +71,15 @@ export default function FilterBar({ categories }: { categories: CategoryRow[] })
         <p className="filter-label">Kapan</p>
         <div className="chiprow">
           {DATE_CHIPS.map((c) => (
-            <button key={c.k} type="button" className="chip date" aria-pressed={date === c.k}
+            <button key={c.k} type="button" className="chip date" aria-pressed={sel.date === c.k}
               onClick={() => apply({ date: c.k })}>{c.l}</button>
           ))}
           <label className="chip date" style={{ display: 'inline-flex', gap: 8, alignItems: 'center',
             ...(custom ? { background: 'var(--orange)', color: '#fff' } : {}) }}>
             <Icon name="calendar" size={15} />
-            {custom ? fmtShort(date.slice(4)) : 'Pilih Tanggal'}
+            {custom ? fmtShort(sel.date.slice(4)) : 'Pilih Tanggal'}
             <input type="date" aria-label="Pilih tanggal"
-              value={custom ? date.slice(4) : ''}
+              value={custom ? sel.date.slice(4) : ''}
               onChange={(e) => apply({ date: e.target.value ? `tgl:${e.target.value}` : 'semua' })}
               style={{ width: 0, height: 0, opacity: 0, border: 0, padding: 0, position: 'absolute' }} />
           </label>
@@ -68,29 +93,29 @@ export default function FilterBar({ categories }: { categories: CategoryRow[] })
         <div className={`filter-more${open ? ' open' : ''}`}>
           <p className="filter-label">Kategori</p>
           <div className="chiprow">
-            <button type="button" className="chip" aria-pressed={cat === 'semua'}
+            <button type="button" className="chip" aria-pressed={sel.cat === 'semua'}
               onClick={() => apply({ cat: 'semua' })}>Semua</button>
             {categories.map((c) => (
-              <button key={c.id} type="button" className="chip" aria-pressed={cat === c.slug}
-                style={cat === c.slug ? { background: c.color, color: '#fff', borderColor: 'var(--ink)' } : undefined}
+              <button key={c.id} type="button" className="chip" aria-pressed={sel.cat === c.slug}
+                style={sel.cat === c.slug ? { background: c.color, color: '#fff', borderColor: 'var(--ink)' } : undefined}
                 onClick={() => apply({ cat: c.slug })}>{c.name}</button>
             ))}
-            <a className="chip" href="/places">Local Spot ↗</a>
+            <Link className="chip" href="/places">Spot Lokal ↗</Link>
           </div>
 
           <p className="filter-label">Saring lagi</p>
           <div className="chiprow" style={{ paddingBottom: 10 }}>
-            <button type="button" className="chip" aria-pressed={price === 'free'}
-              onClick={() => apply({ price: price === 'free' ? 'all' : 'free' })}>Gratis</button>
-            <button type="button" className="chip" aria-pressed={price === 'paid'}
-              onClick={() => apply({ price: price === 'paid' ? 'all' : 'paid' })}>Berbayar</button>
+            <button type="button" className="chip" aria-pressed={sel.price === 'free'}
+              onClick={() => apply({ price: sel.price === 'free' ? 'all' : 'free' })}>Gratis</button>
+            <button type="button" className="chip" aria-pressed={sel.price === 'paid'}
+              onClick={() => apply({ price: sel.price === 'paid' ? 'all' : 'paid' })}>Berbayar</button>
             <select className="chip" aria-label="Pilih kecamatan" style={{ paddingRight: 26 }}
-              value={area} onChange={(e) => apply({ area: e.target.value })}>
+              value={sel.area} onChange={(e) => apply({ area: e.target.value })}>
               <option value="all">Semua Kecamatan</option>
               {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
             <select className="chip" aria-label="Pilih audiens" style={{ paddingRight: 26 }}
-              value={audience} onChange={(e) => apply({ audience: e.target.value })}>
+              value={sel.audience} onChange={(e) => apply({ audience: e.target.value })}>
               <option value="all">Semua Audiens</option>
               {AUDIENCES.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>

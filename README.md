@@ -142,6 +142,25 @@ deletions, so moderation history survives.
 - `/admin` sends `X-Robots-Tag: noindex` and every admin page and action calls
   `requireStaff()` — hiding a button is never the control.
 
+## V1.2 (25 Agustus 2026)
+
+New in this revision:
+
+- **`NEXT_PUBLIC_SITE_URL` is now load-bearing.** Set it on Vercel to the live
+  origin. `src/lib/site-url.ts` resolves it, falls back to the Vercel-provided
+  host, and refuses a `localhost` value in a production build — that value was
+  the cause of shared event links opening "Halaman nggak ketemu".
+- **Migration `0005_v12_revisions.sql`** — run it before deploying. Additive
+  only; existing rows stay valid and nothing needs reseeding.
+- **National holidays** live in `src/lib/holidays.ts`, not in the database.
+  Covered years: 2026, 2027. To add a year, copy the dates from that year's
+  SKB 3 Menteri into the `HOLIDAYS` table — never compute the Islamic-calendar
+  dates, they are set by decree.
+- **Permanent event delete** is admin-only, enforced in three places: the UI
+  only renders for `role = 'admin'`, the server action calls
+  `requireStaff('admin')`, and the RLS policy `events_admin_delete` is the
+  final gate.
+
 ## Timezone
 
 Everything the product calls "today" is Padang time. `todayWIB()` formats

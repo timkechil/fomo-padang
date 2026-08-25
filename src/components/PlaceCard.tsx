@@ -2,6 +2,7 @@ import Link from 'next/link';
 import PosterVisual from './PosterVisual';
 import type { PlaceView } from '@/lib/types';
 import { fmtPrice } from '@/lib/format';
+import { SPOT_LABEL } from '@/lib/constants';
 
 export default function PlaceCard({ place: p }: { place: PlaceView }) {
   const hours = p.opening_hours?.label ?? 'Cek jam buka';
@@ -14,7 +15,9 @@ export default function PlaceCard({ place: p }: { place: PlaceView }) {
           posterUrl={p.cover_image_url} />
       </div>
       <div className="pc-body">
-        <span className="pc-tag">Local Spot · {p.district ?? 'Padang'}</span>
+        <span className="pc-tag">
+          {p.category?.name ?? SPOT_LABEL} · {p.district ?? 'Padang'}
+        </span>
         <h3>{p.name}</h3>
         <span className="pc-meta">
           {hours} · {price}

@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getStaffSession, requireStaff } from '@/lib/supabase/auth';
 import {
-  eventSchema, placeSchema, reviewSchema, organizerSchema,
+  eventSchema, placeSchema, reviewSchema, organizerSchema, categorySchema,
   fieldErrors, formDataToObject,
 } from '@/lib/validation';
 
@@ -280,9 +280,16 @@ export async function setPlaceStatusAction(formData: FormData) {
  * Organizers
  * ------------------------------------------------------------------ */
 
-export async function createOrganizerAction(
-  _prev: ActionState, formData: FormData,
-): Promise<ActionState> {
+export interface OrganizerActionState extends ActionState {
+  organizerId?: string;
+  organizerName?: string;
+}
+
+/** V1.2 §5 — create or update an organizer. Used by /admin/organizers and by
+ *  the inline "+ Tambah Penyelenggara Baru" control on the event form. */
+export async function saveOrganizerAction(
+  _prev: OrganizerActionState, formData: FormData,
+): Promise<OrganizerActionState> {
   await requireStaff();
 
   const parsed = organizerSchema.safeParse(formDataToObject(formData));
@@ -290,10 +297,136 @@ export async function createOrganizerAction(
     return { ok: false, message: 'Data penyelenggara belum pas.', errors: fieldErrors(parsed.error) };
   }
 
+  const { id, ...fields } = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.from('organizers').insert(parsed.data);
+
+  if (id) {
+    const { data, error } = await supabase
+      .from('organizers').update(fields).eq('id', id).select('id, name').single();
+    if (error) return { ok: false, message: `Gagal menyimpan: ${error.message}` };
+    await supabase.rpc('log_admin_action', {
+      p_action: 'updated_organizer', p_entity_type: 'organizer',
+      p_entity_id: id, p_metadata: { name: fields.name },
+    });
+    revalidatePath('/admin/organizers');
+    revalidatePath('/admin/events');
+    return { ok: true, message: 'Penyelenggara diperbarui.', organizerId: data.id, organizerName: data.name };
+  }
+
+  const { data, error } = await supabase
+    .from('organizers').insert(fields).select('id, name').single();
   if (error) return { ok: false, message: `Gagal menyimpan: ${error.message}` };
 
+  await supabase.rpc('log_admin_action', {
+    p_action: 'created_organizer', p_entity_type: 'organizer',
+    p_entity_id: data.id, p_metadata: { name: data.name },
+  });
+
+  revalidatePath('/admin/organizers');
   revalidatePath('/admin/events');
-  return { ok: true, message: 'Penyelenggara ditambahkan.' };
+  return { ok: true, message: 'Penyelenggara ditambahkan.', organizerId: data.id, organizerName: data.name };
+}
+
+/** Kept as an alias so any existing import keeps working. */
+export const createOrganizerAction = saveOrganizerAction;
+
+/* ------------------------------------------------------------------ *
+ * Categories (V1.2 §7)
+ * ------------------------------------------------------------------ */
+
+export async function saveCategoryAction(
+  _prev: ActionState, formData: FormData,
+): Promise<ActionState> {
+  await requireStaff();
+
+  const parsed = categorySchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return { ok: false, message: 'Data kategori belum pas.', errors: fieldErrors(parsed.error) };
+  }
+
+  const { id, slug, ...fields } = parsed.data;
+  const supabase = await createClient();
+
+  if (id) {
+    // The slug is the join key used by every event and place filter URL, so it
+    // is deliberately not editable after creation.
+    const { error } = await supabase.from('categories').update(fields).eq('id', id);
+    if (error) return { ok: false, message: `Gagal menyimpan: ${error.message}` };
+    await supabase.rpc('log_admin_action', {
+      p_action: 'updated_category', p_entity_type: 'category',
+      p_entity_id: id, p_metadata: { name: fields.name },
+    });
+  } else {
+    const generated = (slug ?? fields.name)
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+    const { data, error } = await supabase
+      .from('categories').insert({ ...fields, slug: generated }).select('id').single();
+    if (error) {
+      return {
+        ok: false,
+        message: error.code === '23505'
+          ? 'Sudah ada kategori dengan slug itu. Pakai nama yang sedikit berbeda.'
+          : `Gagal menyimpan: ${error.message}`,
+      };
+    }
+    await supabase.rpc('log_admin_action', {
+      p_action: 'created_category', p_entity_type: 'category',
+      p_entity_id: data.id, p_metadata: { name: fields.name, slug: generated },
+    });
+  }
+
+  revalidatePath('/admin/categories');
+  revalidatePath('/');
+  revalidatePath('/places');
+  return { ok: true, message: 'Kategori tersimpan.' };
+}
+
+/* ------------------------------------------------------------------ *
+ * Permanent delete (V1.2 §15) — admin only
+ * ------------------------------------------------------------------ */
+
+export async function deleteEventPermanentlyAction(
+  _prev: ActionState, formData: FormData,
+): Promise<ActionState> {
+  // requireStaff('admin') redirects an editor away before anything runs.
+  const session = await requireStaff('admin');
+
+  const id = String(formData.get('event_id') ?? '');
+  const confirm = String(formData.get('confirm') ?? '').trim().toUpperCase();
+  if (!id) return { ok: false, message: 'Event tidak ditemukan.' };
+  if (confirm !== 'HAPUS') {
+    return { ok: false, message: 'Ketik HAPUS untuk mengonfirmasi penghapusan permanen.' };
+  }
+
+  const supabase = await createClient();
+  const { data: target } = await supabase
+    .from('events').select('id, slug, title, poster_url').eq('id', id).maybeSingle();
+  if (!target) return { ok: false, message: 'Event tidak ditemukan.' };
+
+  // Log before deleting: the row is about to stop existing.
+  await supabase.rpc('log_admin_action', {
+    p_action: 'deleted_event_permanently', p_entity_type: 'event', p_entity_id: id,
+    p_metadata: { slug: target.slug, title: target.title, by: session.userId },
+  });
+
+  const { data: deleted, error } = await supabase
+    .from('events').delete().eq('id', id).select('id');
+  if (error) return { ok: false, message: `Gagal menghapus: ${error.message}` };
+
+  // RLS refuses a delete by matching zero rows rather than raising, so an
+  // empty result means "not permitted", not "succeeded".
+  if (!deleted || deleted.length === 0) {
+    return { ok: false, message: 'Penghapusan permanen ditolak. Hanya admin yang bisa melakukannya.' };
+  }
+
+  // Best-effort cleanup of the uploaded poster; a failure here must not leave
+  // the admin staring at an error for a row that is already gone.
+  if (target.poster_url && target.poster_url.includes('/event-posters/')) {
+    const path = target.poster_url.split('/event-posters/')[1];
+    if (path) await supabase.storage.from('event-posters').remove([path]).catch(() => {});
+  }
+
+  revalidatePath('/admin/events');
+  revalidatePath('/');
+  redirect('/admin/events?deleted=1');
 }

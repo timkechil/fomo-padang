@@ -6,7 +6,9 @@ import BottomNav from '@/components/BottomNav';
 import ToastHost from '@/components/Toast';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from '@/lib/constants';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fomopadang.id';
+import { siteUrl as resolveSiteUrl } from '@/lib/site-url';
+
+const siteUrl = resolveSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

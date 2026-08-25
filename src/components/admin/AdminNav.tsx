@@ -10,6 +10,8 @@ const LINKS = [
   { href: '/admin/submissions', label: 'Kiriman' },
   { href: '/admin/events', label: 'Event' },
   { href: '/admin/places', label: 'Tempat' },
+  { href: '/admin/organizers', label: 'Penyelenggara' },
+  { href: '/admin/categories', label: 'Kategori' },
 ];
 
 export default function AdminNav({ name, role }: { name: string; role: string }) {

@@ -491,3 +491,104 @@ footer.site a:hover{color:var(--orange)}
     width:44px;height:44px;line-height:44px;font-size:20px;
   }
 }
+
+/* ============ V1.2 REVISIONS ============ */
+
+/* §4 Footer agency attribution — one compact row, wraps on narrow phones. */
+.f-agency{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.18);
+  font-size:12.5px;font-weight:600;opacity:.85;
+}
+.f-agency img{display:block;height:22px;width:auto;background:#fff;padding:5px 9px;border-radius:3px}
+.f-agency strong{font-weight:800;color:var(--white)}
+.f-agency-mark{display:inline-flex;flex:none}
+
+/* §6 Organizer becomes a link when an Instagram URL is stored. */
+.organizer-link{display:block;color:inherit}
+.organizer-link .organizer-name{display:block;font-weight:800;margin-bottom:3px}
+.organizer-link .organizer-handle{
+  display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;
+  color:var(--orange);border-bottom:2px solid var(--orange);padding-bottom:1px;
+}
+
+/* §16 Photo credit — discreet, never dominant. */
+.photo-credit{
+  margin-top:14px;font-size:12px;color:var(--ink-soft);font-weight:600;
+}
+.photo-credit a{border-bottom:1px solid var(--paper-2);word-break:break-all}
+
+/* §3 Latitude/longitude help. Tap-driven, never hover-only. */
+.coordhelp{position:relative;display:inline-block;margin-left:6px;vertical-align:middle}
+.coordhelp-btn{
+  width:22px;height:22px;border-radius:50%;border:1.5px solid var(--ink);background:var(--white);
+  font-weight:900;font-size:12px;line-height:1;cursor:pointer;color:var(--ink);
+}
+.coordhelp-btn:hover{background:var(--yellow)}
+.coordhelp-pop{
+  position:absolute;z-index:60;top:28px;left:0;width:min(300px,78vw);
+  background:var(--white);border:var(--line);border-radius:var(--r);padding:14px;
+  box-shadow:5px 5px 0 var(--ink);font-weight:600;font-size:13px;
+}
+.coordhelp-pop ol{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.coordhelp-pop code{background:var(--paper-2);padding:1px 5px;border-radius:2px}
+
+/* §5 Inline organizer creation inside the event form. */
+.orgpanel{
+  margin-top:12px;padding:14px;border:1.5px dashed var(--ink);border-radius:var(--r);
+  background:var(--paper-2);
+}
+.orgpanel .field:last-of-type{margin-bottom:12px}
+
+/* §15 Permanent delete — visually separated danger action. */
+:root{--danger:#C4331F}
+.dangerzone{
+  margin-top:34px;padding:18px;border:1.5px solid var(--danger);border-radius:var(--r);
+  background:#FDECE8;
+}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn-danger:hover{background:#a52a19}
+.btn-danger[disabled]{opacity:.45}
+.btn-danger-outline{background:transparent;color:var(--danger);border-color:var(--danger)}
+.btn-danger-outline:hover{background:var(--danger);color:#fff}
+
+/* §10 National holidays in the calendar. */
+.calcell.holiday{background:#FFF4E8}
+.calcell.holiday .cal-num{color:var(--danger)}
+.cal-holiday{display:flex;align-items:center;gap:4px;margin-top:2px;min-width:0}
+.cal-holiday-dot{width:6px;height:6px;border-radius:50%;background:var(--danger);flex:none}
+.cal-holiday-name{
+  font-size:9.5px;font-weight:800;color:var(--danger);line-height:1.1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.holiday-row{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:#FFF4E8;border:1.5px solid var(--danger);border-radius:var(--r);
+  padding:10px 12px;font-weight:700;font-size:14px;color:#8E2415;
+}
+.holiday-badge{
+  background:var(--danger);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.06em;
+  text-transform:uppercase;padding:3px 7px;border-radius:2px;flex:none;
+}
+
+/* §13 Places category tabs. */
+.placesfilter{margin-bottom:18px}
+.placesfilter[data-pending="true"]{opacity:.6;cursor:progress}
+
+@media (max-width:860px){
+  /* Holiday name would crowd a phone-sized cell: keep the dot, move the name
+     to the selected-day panel and the agenda. */
+  .cal-holiday-name{display:none}
+  .cal-holiday{justify-content:flex-start}
+  .coordhelp-btn{width:32px;height:32px;font-size:14px}
+  /* Anchored to the viewport, not to the inline label: at 375-430px an
+     absolutely positioned panel ran off the left edge of the screen. */
+  .coordhelp-pop{
+    position:fixed;top:auto;bottom:12px;left:12px;right:12px;width:auto;
+    max-height:70vh;overflow-y:auto;
+  }
+  .dangerzone{margin-top:28px}
+  .f-agency{margin-top:22px}
+  /* Discreet, but still tappable. */
+  .photo-credit a{display:inline-block;padding-block:11px;margin-block:-11px}
+}

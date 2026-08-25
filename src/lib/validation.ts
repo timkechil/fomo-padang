@@ -211,6 +211,8 @@ export const placeSchema = z.object({
   instagram_url: optionalUrl,
   website_url: optionalUrl,
   cover_image_url: optionalUrl,
+  /** V1.2 §14 — free text so "Photo by Tim FOMO" is as valid as a URL. */
+  source_photo: optionalText(300),
 
   status: z.enum(['draft', 'published', 'temporarily_closed', 'archived']).default('draft'),
   featured: checkbox,
@@ -230,10 +232,23 @@ export const reviewSchema = z.object({
 });
 
 export const organizerSchema = z.object({
+  id: optionalUuid,
   name: z.string().trim().min(2).max(160),
   instagram_url: optionalUrl,
   website_url: optionalUrl,
   contact_url: optionalUrl,
+  logo_url: optionalUrl,
+});
+
+/** V1.2 §7 — admin category management. */
+export const categorySchema = z.object({
+  id: optionalUuid,
+  name: z.string().trim().min(2, 'Nama kategori minimal 2 karakter').max(60),
+  slug: optionalText(60),
+  type: z.enum(['event', 'place']).default('event'),
+  color: z.string().trim().regex(/^#[0-9A-Fa-f]{6}$/, 'Warna harus format hex, misal #FD7318'),
+  sort_order: z.coerce.number().int().min(0).max(999).default(0),
+  active: checkbox,
 });
 
 /* ------------------------------------------------------------------ *

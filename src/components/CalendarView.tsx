@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { DOW, MON, MONL, fmtPrice, fmtTime, isFree, parseISODate, toISODate } from '@/lib/format';
 import { categoryColor, primaryCategory } from '@/lib/event-view';
 import type { CategoryRow, EventView } from '@/lib/types';
+import { holidayMapForMonth, holidayOn } from '@/lib/holidays';
 
 interface Props {
   events: EventView[];
@@ -43,6 +44,9 @@ export default function CalendarView({
 
   const onDay = (iso: string) =>
     events.filter((e) => e.start_date <= iso && (e.end_date ?? e.start_date) >= iso);
+
+  // V1.2 §10 — national holidays are a separate layer, never events.
+  const holidays = holidayMapForMonth(month);
 
   const shiftMonth = (delta: number) => {
     const d = new Date(y, m - 1 + delta, 1, 12);
@@ -104,8 +108,9 @@ export default function CalendarView({
               const list = onDay(iso);
               return (
                 <div key={iso} role="button" tabIndex={0}
-                  className={`calcell${iso === today ? ' today' : ''}${selected === iso ? ' sel' : ''}`}
-                  aria-label={`${d.getDate()} ${MONL[d.getMonth()]}, ${list.length} acara`}
+                  className={`calcell${iso === today ? ' today' : ''}${selected === iso ? ' sel' : ''}${holidays[iso] ? ' holiday' : ''}`}
+                  aria-label={`${d.getDate()} ${MONL[d.getMonth()]}${holidays[iso] ? `, libur nasional: ${holidays[iso].name}` : ''}, ${list.length} acara`}
+                  title={holidays[iso]?.name}
                   onClick={() => go({ d: selected === iso ? null : iso })}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -114,6 +119,12 @@ export default function CalendarView({
                     }
                   }}>
                   <span className="cal-num">{d.getDate()}</span>
+                  {holidays[iso] ? (
+                    <span className="cal-holiday" aria-hidden="true">
+                      <span className="cal-holiday-dot" />
+                      <span className="cal-holiday-name">{holidays[iso].name}</span>
+                    </span>
+                  ) : null}
                   {list.slice(0, 3).map((e) => (
                     <div className="cal-ev" key={e.id} style={{ background: categoryColor(e) }}>{e.title}</div>
                   ))}
@@ -132,6 +143,7 @@ export default function CalendarView({
             ) : null}
             {[...agendaDays.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([iso, list]) => {
               const dt = parseISODate(iso);
+              const holiday = holidayOn(iso);
               return (
                 <div className="agenda-day" key={iso}>
                   <div className="agenda-date">
@@ -140,6 +152,12 @@ export default function CalendarView({
                     <span className="ad-mon">{MON[dt.getMonth()]}</span>
                   </div>
                   <div>
+                    {holiday ? (
+                      <div className="holiday-row">
+                        <span className="holiday-badge">Libur Nasional</span>
+                        <span>{holiday.name}</span>
+                      </div>
+                    ) : null}
                     {list.map((e) => (
                       <Link className="agenda-item" key={e.id} href={`/event/${e.slug}`}>
                         <span className="agenda-time">{fmtTime(e.start_time) || '—'}</span>
