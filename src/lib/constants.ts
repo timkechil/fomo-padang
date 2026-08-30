@@ -7,6 +7,10 @@ export const SITE_DESCRIPTION =
 
 export const TIMEZONE = 'Asia/Jakarta';
 
+/** V1.3 §8 — dedicated homepage social preview. Dimensions match the supplied
+ *  asset exactly so no scraper has to guess and nothing is re-cropped. */
+export const OG_IMAGE = { path: '/og-fomo-padang.png', width: 1731, height: 909 } as const;
+
 export const MAP_CENTER: [number, number] = [-0.935, 100.38];
 export const PADANG_CENTER: [number, number] = [-0.9471, 100.4172];
 

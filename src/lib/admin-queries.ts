@@ -1,6 +1,6 @@
 import { createClient } from './supabase/server';
 import { todayWIB, addDays } from './format';
-import type { EventRow, PlaceRow, SubmissionRow, CategoryRow, OrganizerRow } from './types';
+import type { EventRow, PlaceRow, SubmissionRow, PlaceSubmissionRow, CategoryRow, OrganizerRow } from './types';
 
 /** Admin reads. Every one of these runs as the signed-in staff member, so
  *  RLS is what actually grants access — the UI is only the convenience layer. */
@@ -10,7 +10,7 @@ export async function getAdminStats() {
   const today = todayWIB();
   const weekEnd = addDays(today, 7);
 
-  const [active, thisWeek, pending, places, drafts] = await Promise.all([
+  const [active, thisWeek, pending, places, drafts, pendingPlaces] = await Promise.all([
     supabase.from('events').select('id', { count: 'exact', head: true })
       .eq('status', 'published').gte('effective_end_date', today),
     supabase.from('events').select('id', { count: 'exact', head: true })
@@ -19,6 +19,8 @@ export async function getAdminStats() {
       .eq('status', 'pending'),
     supabase.from('places').select('id', { count: 'exact', head: true }).eq('status', 'published'),
     supabase.from('events').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
+    supabase.from('place_submissions').select('id', { count: 'exact', head: true })
+      .eq('status', 'pending'),
   ]);
 
   return {
@@ -27,6 +29,7 @@ export async function getAdminStats() {
     pendingSubmissions: pending.count ?? 0,
     publishedPlaces: places.count ?? 0,
     draftEvents: drafts.count ?? 0,
+    pendingPlaceSubmissions: pendingPlaces.count ?? 0,
   };
 }
 
@@ -44,6 +47,25 @@ export async function getSubmission(id: string): Promise<SubmissionRow | null> {
   const { data, error } = await supabase.from('event_submissions').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   return (data as SubmissionRow) ?? null;
+}
+
+/** V1.3 §12 — contributor place recommendations queue. */
+export async function listPlaceSubmissions(status?: string): Promise<PlaceSubmissionRow[]> {
+  const supabase = await createClient();
+  let q = supabase.from('place_submissions').select('*')
+    .order('created_at', { ascending: false }).limit(100);
+  if (status && status !== 'all') q = q.eq('status', status);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as PlaceSubmissionRow[];
+}
+
+export async function getPlaceSubmission(id: string): Promise<PlaceSubmissionRow | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('place_submissions').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return (data as PlaceSubmissionRow) ?? null;
 }
 
 export type AdminEventFilter =

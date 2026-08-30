@@ -161,6 +161,28 @@ New in this revision:
   `requireStaff('admin')`, and the RLS policy `events_admin_delete` is the
   final gate.
 
+## V1.3 (26 Agustus 2026)
+
+- **Migration `0006_v13_revisions.sql`** — run before deploying. Adds
+  `place_submissions` plus `approve_place_submission()` /
+  `review_place_submission()`. Additive only; no existing row is touched.
+- **`NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is optional.** Leave it empty and the
+  location fields stay manual with the `?` coordinate help — that is a
+  supported permanent mode, not a degraded one. Set it and Google Places
+  autocomplete activates in all four forms (admin event, admin place, Kasih
+  Info Event, Kasih Info Tempat) with no code change. See `.env.example` for
+  the required Google Cloud restrictions.
+- **New public route `/submit-place`** ("Kasih Info Tempat"). Contributor
+  recommendations land in `place_submissions` as `pending` and are never
+  public until an admin approves them at `/admin/place-submissions`.
+- **`source_url` is authoritative for events.** "Lihat Info Asli" opens it;
+  the event-level `instagram_url` column is retained for historical rows but is
+  no longer an input anywhere.
+- **Assets.** `public/logo-fomo-padang.png` is the supplied logo with only its
+  uniform background margin trimmed (no artwork pixel altered);
+  `logo-fomo-padang-original.png` is the untouched file.
+  `public/og-fomo-padang.png` is the supplied social preview, unmodified.
+
 ## Timezone
 
 Everything the product calls "today" is Padang time. `todayWIB()` formats

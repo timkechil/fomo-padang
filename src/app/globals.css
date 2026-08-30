@@ -132,12 +132,18 @@ p{margin:0 0 .8em}
 .hero h1 em{font-style:normal;color:var(--orange)}
 .hero .sub{margin-top:14px;font-size:16.5px;color:#D9D9D6;max-width:46ch}
 .searchbar{display:flex;margin-top:22px;max-width:640px;border:1.5px solid #fff;border-radius:var(--r);overflow:hidden;background:#fff}
-.searchbar input{flex:1;border:0;padding:14px 16px;font-size:15.5px;font-weight:500;outline:none;min-width:0}
+.searchbar input{
+  flex:1;border:0;padding:14px 16px;font-size:15.5px;font-weight:500;outline:none;min-width:0;
+  /* V1.3 §7 — the hero sets color:#fff, which the input inherited, so typed
+     text was white on a white field. Brand ink, with a matching caret. */
+  color:var(--ink);caret-color:var(--orange);background:#fff;
+}
+.searchbar input::placeholder{color:#8A8A86;opacity:1}
 .searchbar button{border:0;border-left:1.5px solid var(--ink);background:var(--orange);color:#fff;font-weight:800;padding:0 20px;cursor:pointer;font-size:14px}
 .searchbar button:hover{background:#e5620c}
 
 /* ============ FILTER BAR ============ */
-.filterbar{background:var(--paper);border-bottom:1.5px solid var(--ink);position:sticky;top:var(--nav-h);z-index:800}
+.filterbar{background:var(--paper);border-bottom:1.5px solid var(--ink)}
 .filterbar .wrap{padding-top:10px;padding-bottom:6px}
 .filter-more{display:block}
 .filter-toggle{display:none}
@@ -523,6 +529,7 @@ footer.site a:hover{color:var(--orange)}
 .coordhelp-btn{
   width:22px;height:22px;border-radius:50%;border:1.5px solid var(--ink);background:var(--white);
   font-weight:900;font-size:12px;line-height:1;cursor:pointer;color:var(--ink);
+  position:relative;
 }
 .coordhelp-btn:hover{background:var(--yellow)}
 .coordhelp-pop{
@@ -580,15 +587,77 @@ footer.site a:hover{color:var(--orange)}
      to the selected-day panel and the agenda. */
   .cal-holiday-name{display:none}
   .cal-holiday{justify-content:flex-start}
-  .coordhelp-btn{width:32px;height:32px;font-size:14px}
+  /* 36px on mobile. Comfortably past the WCAG 2.2 AA target-size minimum
+     (24px) while staying an inline hint rather than a second button competing
+     with the label. A transparent 44px overlay was tried first and hit-tested
+     inconsistently in inline layout, so the real box is sized instead. */
+  .coordhelp-btn{width:36px;height:36px;font-size:15px}
   /* Anchored to the viewport, not to the inline label: at 375-430px an
-     absolutely positioned panel ran off the left edge of the screen. */
+     absolutely positioned panel ran off the left edge of the screen.
+     V1.3: z-index must clear the fixed bottom nav (950) and FAB (951),
+     otherwise the panel renders underneath them and its Tutup button
+     cannot be tapped. */
   .coordhelp-pop{
     position:fixed;top:auto;bottom:12px;left:12px;right:12px;width:auto;
-    max-height:70vh;overflow-y:auto;
+    max-height:70vh;overflow-y:auto;z-index:1200;
+    padding-bottom:calc(14px + env(safe-area-inset-bottom));
   }
   .dangerzone{margin-top:28px}
   .f-agency{margin-top:22px}
   /* Discreet, but still tappable. */
   .photo-credit a{display:inline-block;padding-block:11px;margin-block:-11px}
 }
+
+/* ============ V1.3 REVISIONS ============ */
+
+/* §9 Logo asset. Fixed height + auto width keeps the supplied aspect ratio;
+   the asset is never stretched. */
+.logo-img{display:block;height:30px;width:auto;image-rendering:auto}
+.topbar .logo-img{height:28px}
+footer.site .logo-img{height:30px}
+
+/* §5 Leaflet controls must never escape the map.
+   The wrapper owns the containing block and its own stacking context, and the
+   controls are pinned to absolute so nothing can promote them to fixed. */
+.map-shell,.mapview-wrap{position:relative;overflow:hidden;isolation:isolate}
+.leaflet-container{position:relative!important}
+.leaflet-container .leaflet-control-container{position:absolute;inset:0;pointer-events:none}
+.leaflet-container .leaflet-control-container .leaflet-top,
+.leaflet-container .leaflet-control-container .leaflet-bottom{position:absolute}
+.leaflet-container .leaflet-control{position:relative;pointer-events:auto}
+/* Attribution stays visible inside the map — never hidden (OSM requires it). */
+.leaflet-container .leaflet-control-attribution{display:block;pointer-events:auto}
+
+/* §6 Mobile footer: JELAJAHI / IKUT BANTU read as separate sections. */
+@media (max-width:860px){
+  .f-grid{gap:0}
+  .f-grid > div + div{
+    margin-top:26px;padding-top:22px;border-top:1px solid rgba(255,255,255,.16);
+  }
+  .f-grid h4{margin-bottom:12px}
+  .f-grid a{padding-block:12px;margin-block:-12px}
+  .f-grid > div a{display:block}
+}
+
+/* §3 Pilih Tanggal — the native input stays reachable for showPicker(). */
+.datepick{position:relative;display:inline-flex}
+.datepick-input{
+  position:absolute;left:0;bottom:0;width:1px;height:1px;
+  opacity:0;border:0;padding:0;margin:0;pointer-events:none;
+}
+
+/* §11 Kasih Info Tempat CTA on the Places page. */
+.places-cta{margin:-6px 0 18px}
+
+/* §13 Location autocomplete suggestions. */
+.locsearch{position:relative}
+.locsearch-list{
+  list-style:none;margin:8px 0 0;padding:0;border:var(--line);border-radius:var(--r);
+  background:#fff;overflow:hidden;
+}
+.locsearch-list li + li{border-top:1px solid var(--paper-2)}
+.locsearch-list button{
+  display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;
+  padding:12px 14px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;min-height:44px;
+}
+.locsearch-list button:hover,.locsearch-list button:focus-visible{background:var(--paper-2)}

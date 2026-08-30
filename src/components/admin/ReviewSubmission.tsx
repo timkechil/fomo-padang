@@ -88,7 +88,6 @@ export default function ReviewSubmission({
                     price_amount: s.price_amount,
                     ticket_url: s.ticket_url,
                     source_url: s.source_url,
-                    instagram_url: s.instagram_url,
                     poster_url: s.poster_url,
                     registration_required: s.registration_required,
                     audience: s.audience,

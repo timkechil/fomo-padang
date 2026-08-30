@@ -221,6 +221,76 @@ export const placeSchema = z.object({
 export type PlaceInput = z.infer<typeof placeSchema>;
 
 /* ------------------------------------------------------------------ *
+ * Public place submission (V1.3 §11)
+ *
+ * As with event submissions, note what is absent: status, submission_code,
+ * reviewed_by, reviewed_at, approved_place_id. Those are owned by the server
+ * and the database trigger, so a crafted request cannot self-approve.
+ * ------------------------------------------------------------------ */
+
+export const placeSubmissionSchema = z
+  .object({
+    place_name: z.string().trim().min(2, 'Nama tempat minimal 2 karakter').max(180),
+    category_id: z.string().uuid('Pilih kategori tempatnya'),
+    source_url: httpUrl,
+
+    address: optionalText(300),
+    district: districtEnum,
+    latitude: optionalLat,
+    longitude: optionalLng,
+
+    description: optionalText(4000),
+    opening_hours_label: optionalText(180),
+    admission_type: z
+      .union([priceType, z.literal('')])
+      .optional()
+      .transform((v) => (v ? v : null)),
+    admission_price: optionalPrice,
+
+    instagram_url: optionalUrl,
+    website_url: optionalUrl,
+    source_photo: optionalText(300),
+
+    contributor_name: optionalText(120),
+    contributor_contact: optionalText(160),
+
+    /** Honeypot, same as the event form. */
+    website: z.string().max(0, 'spam').optional(),
+    turnstile_token: z.string().optional(),
+  })
+  .refine((v) => v.admission_type !== 'paid' || v.admission_price !== null, {
+    message: 'Isi perkiraan harga masuk kalau tempatnya berbayar',
+    path: ['admission_price'],
+  })
+  .refine((v) => (v.latitude === null) === (v.longitude === null), {
+    message: 'Latitude dan longitude harus diisi berpasangan',
+    path: ['longitude'],
+  });
+
+export type PlaceSubmissionInput = z.infer<typeof placeSubmissionSchema>;
+
+/** Admin approval payload for a place submission. */
+export const approvePlaceSchema = z.object({
+  submission_id: z.string().uuid(),
+  name: z.string().trim().min(2).max(180),
+  category_id: optionalUuid,
+  description: optionalText(8000),
+  tips: optionalText(600),
+  address: optionalText(300),
+  district: districtEnum,
+  latitude: optionalLat,
+  longitude: optionalLng,
+  opening_hours_label: optionalText(180),
+  admission_type: priceType.default('free'),
+  admission_price: optionalPrice,
+  instagram_url: optionalUrl,
+  website_url: optionalUrl,
+  cover_image_url: optionalUrl,
+  source_photo: optionalText(300),
+  featured: checkbox,
+});
+
+/* ------------------------------------------------------------------ *
  * Admin: moderation
  * ------------------------------------------------------------------ */
 
@@ -230,6 +300,9 @@ export const reviewSchema = z.object({
   reason: optionalText(240),
   notes: optionalText(1000),
 });
+
+/** Same shape, used for place submissions. */
+export const reviewPlaceSchema = reviewSchema;
 
 export const organizerSchema = z.object({
   id: optionalUuid,

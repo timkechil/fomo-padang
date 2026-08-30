@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import PosterUploader from './PosterUploader';
-import CoordHelp from './CoordHelp';
+import LocationPicker from '../LocationPicker';
 import { DISTRICTS } from '@/lib/constants';
 import { savePlaceAction, type ActionState } from '@/server/admin-actions';
 import type { CategoryRow, PlaceRow } from '@/lib/types';
@@ -59,25 +59,13 @@ export default function PlaceForm({
             {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         </div>
-        <div className="field">
-          <label htmlFor="p-address">Alamat</label>
-          <input id="p-address" name="address" defaultValue={place?.address ?? ''} />
-        </div>
+
         <div className="field">
           <label htmlFor="p-hours">Jam buka (teks)</label>
           <input id="p-hours" name="opening_hours_label"
             defaultValue={place?.opening_hours?.label ?? ''} placeholder="Setiap hari 08.00–18.00" />
         </div>
-        <div className="field">
-          <label htmlFor="p-lat">Latitude <CoordHelp /></label>
-          <input id="p-lat" name="latitude" defaultValue={place?.latitude ?? ''} />
-          {err('latitude')}
-        </div>
-        <div className="field">
-          <label htmlFor="p-lng">Longitude <CoordHelp /></label>
-          <input id="p-lng" name="longitude" defaultValue={place?.longitude ?? ''} />
-          {err('longitude')}
-        </div>
+
         <div className="field">
           <label htmlFor="p-atype">Tiket masuk</label>
           <select id="p-atype" name="admission_type" defaultValue={place?.admission_type ?? 'free'}>
@@ -100,6 +88,16 @@ export default function PlaceForm({
           <input id="p-web" name="website_url" type="url" defaultValue={place?.website_url ?? ''} />
         </div>
       </div>
+
+      <LocationPicker
+        showVenue={false}
+        names={{ venue: 'venue_name', address: 'address', latitude: 'latitude', longitude: 'longitude' }}
+        defaults={{
+          address: place?.address ?? '',
+          latitude: place?.latitude != null ? String(place.latitude) : '',
+          longitude: place?.longitude != null ? String(place.longitude) : '',
+        }} />
+      {err('latitude')}{err('longitude')}
 
       <div className="field">
         <label>Foto sampul</label>

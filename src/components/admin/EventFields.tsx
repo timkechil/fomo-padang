@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import PosterUploader from './PosterUploader';
 import OrganizerPicker from './OrganizerPicker';
-import CoordHelp from './CoordHelp';
+import LocationPicker from '../LocationPicker';
 import { AUDIENCES, DISTRICTS } from '@/lib/constants';
 import type { CategoryRow, OrganizerRow } from '@/lib/types';
 
@@ -98,10 +98,7 @@ export default function EventFields({
           <input id="f-et" name="end_time" type="time" defaultValue={time(defaults.end_time)} />
         </div>
 
-        <div className="field">
-          <label htmlFor="f-venue">Nama tempat</label>
-          <input id="f-venue" name="venue_name" defaultValue={defaults.venue_name ?? ''} />
-        </div>
+
         <div className="field">
           <label htmlFor="f-district">Kecamatan</label>
           <select id="f-district" name="district" defaultValue={defaults.district ?? ''}>
@@ -110,10 +107,7 @@ export default function EventFields({
           </select>
         </div>
 
-        <div className="field">
-          <label htmlFor="f-address">Alamat</label>
-          <input id="f-address" name="address" defaultValue={defaults.address ?? ''} />
-        </div>
+
         <div className="field">
           <label htmlFor="f-audience">Untuk siapa</label>
           <select id="f-audience" name="audience" defaultValue={defaults.audience ?? ''}>
@@ -122,18 +116,7 @@ export default function EventFields({
           </select>
         </div>
 
-        <div className="field">
-          <label htmlFor="f-lat">Latitude <CoordHelp /></label>
-          <input id="f-lat" name="latitude" defaultValue={defaults.latitude ?? ''}
-            placeholder="-0.9438" aria-invalid={invalid('latitude')} />
-          {err('latitude')}
-        </div>
-        <div className="field">
-          <label htmlFor="f-lng">Longitude <CoordHelp /></label>
-          <input id="f-lng" name="longitude" defaultValue={defaults.longitude ?? ''}
-            placeholder="100.3595" aria-invalid={invalid('longitude')} />
-          {err('longitude')}
-        </div>
+
 
         <div className="field">
           <label htmlFor="f-ptype">Tiket</label>
@@ -156,16 +139,30 @@ export default function EventFields({
           <input id="f-ticket" name="ticket_url" type="url" defaultValue={defaults.ticket_url ?? ''} />
         </div>
         <div className="field">
-          <label htmlFor="f-source">Link sumber</label>
+          <label htmlFor="f-source">Link Sumber Asli Event</label>
           <input id="f-source" name="source_url" type="url" defaultValue={defaults.source_url ?? ''}
+            placeholder="https://instagram.com/p/... atau link resmi event"
             aria-invalid={invalid('source_url')} />
+          <p className="hint">
+            Link ke postingan/halaman asli event ini — bukan profil penyelenggara.
+            Tombol “Lihat Info Asli” di halaman publik membuka link ini.
+          </p>
           {err('source_url')}
         </div>
-        <div className="field">
-          <label htmlFor="f-ig">Link Instagram</label>
-          <input id="f-ig" name="instagram_url" type="url" defaultValue={defaults.instagram_url ?? ''} />
-        </div>
       </div>
+
+      {/* V1.3 §13/§14 — one shared location component: Google Places when
+          configured, manual venue/address/lat/lng with ? help always. */}
+      <LocationPicker
+        venueLabel="Nama tempat"
+        names={{ venue: 'venue_name', address: 'address', latitude: 'latitude', longitude: 'longitude' }}
+        defaults={{
+          venue: defaults.venue_name ?? '',
+          address: defaults.address ?? '',
+          latitude: defaults.latitude != null ? String(defaults.latitude) : '',
+          longitude: defaults.longitude != null ? String(defaults.longitude) : '',
+        }} />
+      {err('latitude')}{err('longitude')}
 
       <div className="field">
         <label>Kategori</label>

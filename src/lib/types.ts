@@ -133,6 +133,36 @@ export interface SubmissionRow {
   updated_at: string;
 }
 
+/** V1.3 §11 — contributor place recommendations. */
+export interface PlaceSubmissionRow {
+  id: string;
+  submission_code: string;
+  place_name: string;
+  category_id: string | null;
+  source_url: string;
+  description: string | null;
+  address: string | null;
+  district: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  opening_hours_label: string | null;
+  admission_type: PriceType | null;
+  admission_price: number | null;
+  instagram_url: string | null;
+  website_url: string | null;
+  source_photo: string | null;
+  contributor_name: string | null;
+  contributor_contact: string | null;
+  status: SubmissionStatus;
+  admin_notes: string | null;
+  reject_reason: string | null;
+  approved_place_id: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ProfileRow {
   id: string;
   full_name: string | null;

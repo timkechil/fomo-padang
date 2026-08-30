@@ -23,6 +23,7 @@ export default function SiteFooter() {
           <div>
             <h4>Ikut Bantu</h4>
             <Link href="/submit">Kasih Info Event</Link>
+            <Link href="/submit-place">Kasih Info Tempat</Link>
             <Link href="/plan">Rencana Kamu</Link>
             <Link href="/admin">Tim FOMO (Admin)</Link>
           </div>
@@ -32,20 +33,24 @@ export default function SiteFooter() {
               Instagram @fomopadang
             </a>
             <p style={{ marginTop: 12, fontSize: 12, opacity: .7 }}>
-              Info acara dikirim komunitas dan dicek tim FOMO sebelum tayang.
+              Info acara dikirim kontributor dan dicek Tim FOMO sebelum tayang.
             </p>
           </div>
         </div>
         {/* V1.2 §4 — agency attribution, kept to one compact row on mobile. */}
         <div className="f-agency">
           <a href="https://instagram.com/timkechil" target="_blank" rel="noopener noreferrer"
-            className="f-agency-mark" aria-label="TimKechil Digital Agency">
+            className="f-agency-mark" aria-label="TimKechil Digital Agency" tabIndex={-1}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/timkechil.png" alt="" width={116} height={26} loading="lazy" />
           </a>
-          {/* The sentence stays complete in text, so it still reads correctly
-              if the logo fails to load. */}
-          <span>FOMO Padang adalah bagian dari <strong>TimKechil Digital Agency</strong>.</span>
+          {/* Only the agency name is a link (V1.3 §4). */}
+          <span>
+            FOMO Padang dikembangkan oleh{' '}
+            <a href="https://instagram.com/timkechil" target="_blank" rel="noopener noreferrer">
+              <strong>TimKechil Digital Agency</strong>
+            </a>
+          </span>
         </div>
       </div>
     </footer>

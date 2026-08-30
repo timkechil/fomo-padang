@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import Icon from './Icon';
+import LocationPicker from './LocationPicker';
 import { AUDIENCES, DISTRICTS } from '@/lib/constants';
 import type { CategoryRow } from '@/lib/types';
 
@@ -99,8 +100,11 @@ export default function SubmitForm({ categories }: { categories: CategoryRow[] }
       <h3 className="blockhead">Yang wajib diisi</h3>
 
       <div className="field">
-        <label htmlFor="s-url">Link sumber event <span className="req">*</span></label>
-        <p className="hint">Instagram, TikTok, website, atau tautan publik lain. Ini yang kami pakai buat verifikasi.</p>
+        <label htmlFor="s-url">Link Sumber Asli Event <span className="req">*</span></label>
+        <p className="hint">
+          Link ke postingan atau halaman asli acaranya — Instagram, TikTok, website, atau
+          pengumuman resmi. Bukan link profil. Ini yang kami pakai buat verifikasi.
+        </p>
         <input id="s-url" name="source_url" type="url" placeholder="https://instagram.com/p/..."
           aria-invalid={invalid('source_url')} required />
         {err('source_url')}
@@ -152,10 +156,7 @@ export default function SubmitForm({ categories }: { categories: CategoryRow[] }
               <label htmlFor="s-et">Jam selesai</label>
               <input id="s-et" name="end_time" type="time" />
             </div>
-            <div className="field">
-              <label htmlFor="s-venue">Nama tempat</label>
-              <input id="s-venue" name="venue_name" placeholder="Misal: Youth Center Padang" />
-            </div>
+
             <div className="field">
               <label htmlFor="s-area">Kecamatan</label>
               <select id="s-area" name="district" defaultValue="">
@@ -163,20 +164,8 @@ export default function SubmitForm({ categories }: { categories: CategoryRow[] }
                 {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
-            <div className="field">
-              <label htmlFor="s-addr">Alamat</label>
-              <input id="s-addr" name="address" placeholder="Jalan, kelurahan" />
-            </div>
-            <div className="field">
-              <label htmlFor="s-lat">Titik peta — latitude</label>
-              <input id="s-lat" name="latitude" placeholder="-0.9438" aria-invalid={invalid('latitude')} />
-              {err('latitude')}
-            </div>
-            <div className="field">
-              <label htmlFor="s-lng">Titik peta — longitude</label>
-              <input id="s-lng" name="longitude" placeholder="100.3595" aria-invalid={invalid('longitude')} />
-              {err('longitude')}
-            </div>
+
+
             <div className="field">
               <label htmlFor="s-ptype">Tiket</label>
               <select id="s-ptype" name="price_type" defaultValue="">
@@ -196,10 +185,6 @@ export default function SubmitForm({ categories }: { categories: CategoryRow[] }
               <input id="s-ticket" name="ticket_url" type="url" placeholder="https://..." />
             </div>
             <div className="field">
-              <label htmlFor="s-ig">Link postingan Instagram</label>
-              <input id="s-ig" name="instagram_url" type="url" placeholder="https://instagram.com/p/..." />
-            </div>
-            <div className="field">
               <label htmlFor="s-aud">Untuk siapa</label>
               <select id="s-aud" name="audience" defaultValue="">
                 <option value="">Belum tahu</option>
@@ -215,6 +200,11 @@ export default function SubmitForm({ categories }: { categories: CategoryRow[] }
               </select>
             </div>
           </div>
+
+          <LocationPicker
+            venueLabel="Nama tempat"
+            names={{ venue: 'venue_name', address: 'address', latitude: 'latitude', longitude: 'longitude' }} />
+          {err('latitude')}{err('longitude')}
 
           <div className="field">
             <label htmlFor="s-desc">Deskripsi singkat</label>

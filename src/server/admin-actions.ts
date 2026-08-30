@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getStaffSession, requireStaff } from '@/lib/supabase/auth';
 import {
   eventSchema, placeSchema, reviewSchema, organizerSchema, categorySchema,
+  approvePlaceSchema, reviewPlaceSchema,
   fieldErrors, formDataToObject,
 } from '@/lib/validation';
 
@@ -429,4 +430,67 @@ export async function deleteEventPermanentlyAction(
   revalidatePath('/admin/events');
   revalidatePath('/');
   redirect('/admin/events?deleted=1');
+}
+
+
+/* ------------------------------------------------------------------ *
+ * Place submissions (V1.3 §12)
+ * ------------------------------------------------------------------ */
+
+/** Approve → create the published Place, in one idempotent transaction. */
+export async function approvePlaceSubmissionAction(
+  _prev: ActionState, formData: FormData,
+): Promise<ActionState> {
+  await requireStaff();
+
+  const parsed = approvePlaceSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: 'Ada isian tempat yang belum lengkap.',
+      errors: fieldErrors(parsed.error),
+    };
+  }
+
+  const { submission_id, ...place } = parsed.data;
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc('approve_place_submission', {
+    p_submission_id: submission_id,
+    p_place: place,
+  });
+
+  if (error) return { ok: false, message: `Gagal menyetujui: ${error.message}` };
+
+  const result = data as { slug: string; already_approved: boolean };
+  revalidatePath('/admin');
+  revalidatePath('/admin/place-submissions');
+  revalidatePath('/places');
+  revalidatePath(`/place/${result.slug}`);
+  redirect(`/admin/place-submissions?published=${encodeURIComponent(result.slug)}`);
+}
+
+export async function reviewPlaceSubmissionAction(
+  _prev: ActionState, formData: FormData,
+): Promise<ActionState> {
+  await requireStaff();
+
+  const parsed = reviewPlaceSchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) {
+    return { ok: false, message: 'Aksi moderasi tidak valid.', errors: fieldErrors(parsed.error) };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('review_place_submission', {
+    p_submission_id: parsed.data.submission_id,
+    p_status: parsed.data.status,
+    p_reason: parsed.data.reason,
+    p_notes: parsed.data.notes,
+  });
+
+  if (error) return { ok: false, message: `Gagal menyimpan: ${error.message}` };
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/place-submissions');
+  return { ok: true, message: 'Status rekomendasi diperbarui.' };
 }

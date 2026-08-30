@@ -4,7 +4,6 @@ import PageHead from '@/components/PageHead';
 import PlaceCard from '@/components/PlaceCard';
 import PlacesFilter from '@/components/PlacesFilter';
 import EmptyState from '@/components/EmptyState';
-import CtaStrip from '@/components/CtaStrip';
 import SiteFooter from '@/components/SiteFooter';
 import Icon from '@/components/Icon';
 import { getPlaceCategories, getPlaces } from '@/lib/queries';
@@ -38,12 +37,19 @@ export default async function PlacesPage({ searchParams }: { searchParams: Searc
       <section className="section">
         <div className="wrap">
           <PlacesFilter categories={categories} />
+          <div className="places-cta">
+            <Link className="btn btn-sm btn-primary" href="/submit-place">
+              <Icon name="plus" size={15} /> Kasih Info Tempat
+            </Link>
+          </div>
 
           <div className="sec-head">
             <h2 className="sec-title">
               {places.length} tempat{activeName ? ` · ${activeName}` : ''}
             </h2>
-            <Link className="linkmore" href="/map">Lihat di peta <Icon name="arrow" size={14} /></Link>
+            <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Link className="linkmore" href="/map">Lihat di peta <Icon name="arrow" size={14} /></Link>
+            </div>
           </div>
 
           {places.length ? (
@@ -55,7 +61,22 @@ export default async function PlacesPage({ searchParams }: { searchParams: Searc
           )}
         </div>
       </section>
-      <CtaStrip />
+      {/* V1.3 §11 — contributor CTA, mirroring the event CTA strip. */}
+      <section className="cta-strip">
+        <div className="wrap" style={{ display: 'flex', gap: 26, justifyContent: 'space-between',
+          alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <div>
+            <h2>Tahu tempat yang belum masuk FOMO?</h2>
+            <p style={{ marginTop: 12, fontWeight: 600, maxWidth: '44ch' }}>
+              Warung favorit, spot nongkrong, toko oleh-oleh — kasih tahu kami.
+              Tim FOMO yang cek sebelum tayang. Nggak perlu bikin akun.
+            </p>
+          </div>
+          <Link className="btn btn-ink" href="/submit-place">
+            <Icon name="send" size={16} /> Kasih Info Tempat
+          </Link>
+        </div>
+      </section>
       <SiteFooter />
     </>
   );

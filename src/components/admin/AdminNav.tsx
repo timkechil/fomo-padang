@@ -8,6 +8,7 @@ import { signOutAction } from '@/server/admin-actions';
 const LINKS = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/submissions', label: 'Kiriman' },
+  { href: '/admin/place-submissions', label: 'Rekomendasi Tempat' },
   { href: '/admin/events', label: 'Event' },
   { href: '/admin/places', label: 'Tempat' },
   { href: '/admin/organizers', label: 'Penyelenggara' },

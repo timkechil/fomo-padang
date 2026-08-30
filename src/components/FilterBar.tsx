@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import Icon from './Icon';
 import { DATE_CHIPS, DISTRICTS, AUDIENCES } from '@/lib/constants';
 import { fmtShort } from '@/lib/format';
@@ -18,6 +18,30 @@ export default function FilterBar({ categories }: { categories: CategoryRow[] })
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  /**
+   * V1.3 §3 — "Pilih Tanggal" did nothing on desktop.
+   *
+   * The native <input type="date"> was 0x0 and opacity:0. Mobile browsers open
+   * their date UI when such an input receives focus, which is why phones
+   * worked; desktop Chrome/Edge only open the picker when the calendar
+   * indicator itself is clicked, and a 0x0 input has none to click.
+   *
+   * showPicker() is the supported way to open it from a user gesture
+   * (Chrome 99+, Edge, Safari 16+, Firefox 101+). Focus alone remains the
+   * fallback for anything older, so mobile behaviour is untouched.
+   */
+  function openDatePicker() {
+    const el = dateInputRef.current;
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    try {
+      el.showPicker?.();
+    } catch {
+      /* not supported, or no user activation: focus already opened it on mobile */
+    }
+  }
 
   const date = params.get('date') ?? 'semua';
   const cat = params.get('cat') ?? 'semua';
@@ -74,15 +98,21 @@ export default function FilterBar({ categories }: { categories: CategoryRow[] })
             <button key={c.k} type="button" className="chip date" aria-pressed={sel.date === c.k}
               onClick={() => apply({ date: c.k })}>{c.l}</button>
           ))}
-          <label className="chip date" style={{ display: 'inline-flex', gap: 8, alignItems: 'center',
-            ...(custom ? { background: 'var(--orange)', color: '#fff' } : {}) }}>
-            <Icon name="calendar" size={15} />
-            {custom ? fmtShort(sel.date.slice(4)) : 'Pilih Tanggal'}
-            <input type="date" aria-label="Pilih tanggal"
+          <span className="datepick">
+            <button type="button" className="chip date"
+              aria-haspopup="dialog"
+              aria-label={custom ? `Tanggal dipilih ${fmtShort(sel.date.slice(4))}, ganti tanggal` : 'Pilih tanggal'}
+              style={{ display: 'inline-flex', gap: 8, alignItems: 'center',
+                ...(custom ? { background: 'var(--orange)', color: '#fff' } : {}) }}
+              onClick={openDatePicker}>
+              <Icon name="calendar" size={15} />
+              {custom ? fmtShort(sel.date.slice(4)) : 'Pilih Tanggal'}
+            </button>
+            <input ref={dateInputRef} type="date" className="datepick-input" tabIndex={-1}
+              aria-hidden="true"
               value={custom ? sel.date.slice(4) : ''}
-              onChange={(e) => apply({ date: e.target.value ? `tgl:${e.target.value}` : 'semua' })}
-              style={{ width: 0, height: 0, opacity: 0, border: 0, padding: 0, position: 'absolute' }} />
-          </label>
+              onChange={(e) => apply({ date: e.target.value ? `tgl:${e.target.value}` : 'semua' })} />
+          </span>
           <button type="button" className="chip filter-toggle" aria-expanded={open}
             style={open ? { background: 'var(--ink)', color: '#fff' } : undefined}
             onClick={() => setOpen((v) => !v)}>

@@ -240,7 +240,12 @@ export default async function EventDetail({ params }: { params: Params }) {
                     dan perubahan terbaru.
                   </p>
                   <a className="btn btn-sm" target="_blank" rel="noopener noreferrer"
-                    href={e.instagram_url ?? e.source_url!}>
+                    /* V1.3 §2 — source_url is authoritative. This used to
+                       prefer the event's instagram_url, which is why "Lihat
+                       Info Asli" could land on a profile instead of the
+                       original post. instagram_url is only a fallback for
+                       historical rows that predate the change. */
+                    href={e.source_url ?? e.instagram_url!}>
                     <Icon name="external" size={15} /> Lihat Info Asli
                   </a>
                 </div>

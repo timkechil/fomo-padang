@@ -32,6 +32,12 @@ export default async function AdminDashboard() {
               </div>
               <div className="s-lab">Perlu ditinjau</div>
             </div>
+            <div className="stat">
+              <div className="s-num" style={{ color: stats.pendingPlaceSubmissions ? 'var(--orange)' : undefined }}>
+                {stats.pendingPlaceSubmissions}
+              </div>
+              <div className="s-lab">Rekomendasi tempat</div>
+            </div>
             <div className="stat"><div className="s-num">{stats.publishedPlaces}</div>
               <div className="s-lab">Tempat tayang</div></div>
           </div>
