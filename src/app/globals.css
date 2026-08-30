@@ -384,13 +384,17 @@ footer.site a:hover{color:var(--orange)}
   .infogrid{grid-template-columns:1fr 1fr}
   /* mobile chrome */
   .bottomnav{
-    display:grid;grid-template-columns:repeat(4,1fr);position:fixed;bottom:0;left:0;right:0;z-index:950;
+    display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;left:0;right:0;z-index:950;
     background:var(--ink);border-top:1.5px solid #000;padding-bottom:env(safe-area-inset-bottom);
   }
   .bottomnav a{
     display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;color:#9d9d99;
     font-size:10.5px;font-weight:800;letter-spacing:.03em;
+    /* Five columns instead of four: keep each label on one line so the bar
+       height is unchanged, and clip rather than wrap if a label ever grows. */
+    min-width:0;white-space:nowrap;
   }
+  .bottomnav a span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
   .bottomnav a.active{color:#fff}
   .bottomnav a.active svg{color:var(--orange)}
   .fab{

@@ -9,9 +9,16 @@ import { getPlan, PLAN_EVENT } from '@/lib/plan';
 const ITEMS = [
   { href: '/', label: 'Explore', icon: 'compass' },
   { href: '/map', label: 'Peta', icon: 'pin' },
+  { href: '/places', label: 'Tempat', icon: 'store' },
   { href: '/calendar', label: 'Kalender', icon: 'calendar' },
   { href: '/plan', label: 'Rencana', icon: 'list' },
 ];
+
+/** Places live at /places but a single place is /place/[slug], so the Tempat
+ *  tab has to match both. Everything else is a plain prefix match. */
+const EXTRA_MATCH: Record<string, (path: string) => boolean> = {
+  '/places': (path) => path.startsWith('/places') || path.startsWith('/place/'),
+};
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -25,7 +32,11 @@ export default function BottomNav() {
   }, []);
 
   if (pathname.startsWith('/admin')) return null;
-  const active = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+  const active = (href: string) => {
+    if (href === '/') return pathname === '/';
+    const extra = EXTRA_MATCH[href];
+    return extra ? extra(pathname) : pathname.startsWith(href);
+  };
 
   return (
     <>
