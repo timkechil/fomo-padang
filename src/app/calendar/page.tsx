@@ -7,6 +7,7 @@ import PageHead from '@/components/PageHead';
 import { getCategories, getMonthEvents } from '@/lib/queries';
 import { fmtLong, todayWIB } from '@/lib/format';
 import { holidayOn } from '@/lib/holidays';
+import { occursOn } from '@/lib/schedule';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
@@ -31,9 +32,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
     getCategories('event'),
   ]);
 
-  const selectedList = selected
-    ? events.filter((e) => e.start_date <= selected && (e.end_date ?? e.start_date) >= selected)
-    : [];
+  const selectedList = selected ? events.filter((e) => occursOn(e, selected)) : [];
   const selectedHoliday = selected ? holidayOn(selected) : null;
 
   return (

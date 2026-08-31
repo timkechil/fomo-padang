@@ -10,8 +10,12 @@ import Icon from '@/components/Icon';
 import { getEventBySlug, getRelatedEvents } from '@/lib/queries';
 import { primaryCategory } from '@/lib/event-view';
 import {
-  fmtPrice, fmtRange, fmtShort, fmtTime, isFree, isPast, relLabel, todayWIB,
+  fmtPrice, fmtShort, fmtTime, isFree, relLabel, todayWIB,
 } from '@/lib/format';
+import {
+  displayDate, formatSchedule, isFinished, lastOccurrence, nextOccurrence,
+  occurrenceDates, scheduleTypeOf,
+} from '@/lib/schedule';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +41,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   if (!e) return { title: 'Acara tidak ditemukan', robots: { index: false } };
 
   const desc = e.description?.slice(0, 160)
-    ?? `${e.title} di ${e.venue_name ?? 'Padang'}, ${fmtRange(e)}.`;
+    ?? `${e.title} di ${e.venue_name ?? 'Padang'}, ${formatSchedule(e)}.`;
 
   return {
     title: e.title,
@@ -68,7 +72,7 @@ export default async function EventDetail({ params }: { params: Params }) {
   const related = await getRelatedEvents(e, 3);
   const cat = primaryCategory(e);
   const free = isFree(e.price_type);
-  const past = isPast(e, todayWIB());
+  const past = isFinished(e, todayWIB());   // only after the LAST occurrence
   const hasCoords = e.latitude != null && e.longitude != null;
 
   const jsonLd = {
@@ -78,8 +82,16 @@ export default async function EventDetail({ params }: { params: Params }) {
     description: e.description ?? undefined,
     startDate: e.start_time ? `${e.start_date}T${fmtTime(e.start_time)}:00+07:00` : e.start_date,
     endDate: e.end_time
-      ? `${e.end_date ?? e.start_date}T${fmtTime(e.end_time)}:00+07:00`
-      : (e.end_date ?? e.start_date),
+      ? `${lastOccurrence(e)}T${fmtTime(e.end_time)}:00+07:00`
+      : lastOccurrence(e),
+    eventSchedule: scheduleTypeOf(e) === 'multiple'
+      ? occurrenceDates(e).map((d) => ({
+          '@type': 'Schedule',
+          startDate: d,
+          endDate: d,
+          scheduleTimezone: 'Asia/Jakarta',
+        }))
+      : undefined,
     eventStatus: e.status === 'cancelled'
       ? 'https://schema.org/EventCancelled'
       : 'https://schema.org/EventScheduled',
@@ -152,7 +164,7 @@ export default async function EventDetail({ params }: { params: Params }) {
               ) : null}
 
               <dl className="infogrid">
-                <div><dt>Tanggal</dt><dd>{fmtRange(e)}</dd></div>
+                <div><dt>Tanggal</dt><dd>{formatSchedule(e)}</dd></div>
                 <div><dt>Waktu</dt><dd>
                   {e.start_time ? `${fmtTime(e.start_time)}${e.end_time ? `–${fmtTime(e.end_time)}` : ''} WIB` : 'Cek penyelenggara'}
                 </dd></div>
@@ -169,7 +181,7 @@ export default async function EventDetail({ params }: { params: Params }) {
                 <PlanButton variant="button" item={{
                   id: e.id, kind: 'event', slug: e.slug, title: e.title,
                   venue: e.venue_name, district: e.district,
-                  date: e.start_date < todayWIB() ? todayWIB() : e.start_date,
+                  date: displayDate(e),
                   time: e.start_time ? fmtTime(e.start_time) : null, note: '',
                 }} />
                 {hasCoords ? (
@@ -260,7 +272,7 @@ export default async function EventDetail({ params }: { params: Params }) {
               Ringkas
             </h3>
             <p style={{ fontWeight: 700, margin: '0 0 4px' }}>
-              {relLabel(e.start_date)}{e.start_time ? ` · ${fmtTime(e.start_time)} WIB` : ''}
+              {relLabel(displayDate(e))}{e.start_time ? ` · ${fmtTime(e.start_time)} WIB` : ''}
             </p>
             <p className="sec-note" style={{ margin: '0 0 12px' }}>
               {e.district ?? 'Padang'} · {fmtPrice(e.price_type, e.price_amount)}
@@ -268,7 +280,7 @@ export default async function EventDetail({ params }: { params: Params }) {
             <PlanButton variant="block" item={{
               id: e.id, kind: 'event', slug: e.slug, title: e.title,
               venue: e.venue_name, district: e.district,
-              date: e.start_date < todayWIB() ? todayWIB() : e.start_date,
+              date: displayDate(e),
               time: e.start_time ? fmtTime(e.start_time) : null, note: '',
             }} />
           </div>

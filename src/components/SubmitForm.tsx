@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import Icon from './Icon';
 import LocationPicker from './LocationPicker';
+import ScheduleFields from './ScheduleFields';
 import { AUDIENCES, DISTRICTS } from '@/lib/constants';
 import type { CategoryRow } from '@/lib/types';
 
@@ -126,6 +127,8 @@ export default function SubmitForm({ categories }: { categories: CategoryRow[] }
       <details className="accordion" style={{ marginTop: 22 }}>
         <summary>Detail tambahan (opsional) <Icon name="down" size={16} /></summary>
         <div className="acc-body">
+          <ScheduleFields idPrefix="s" errors={errors} />
+
           <div className="formgrid">
             <div className="field">
               <label htmlFor="s-org">Penyelenggara</label>
@@ -137,16 +140,6 @@ export default function SubmitForm({ categories }: { categories: CategoryRow[] }
                 <option value="">Belum tahu</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
-            </div>
-            <div className="field">
-              <label htmlFor="s-start">Tanggal mulai</label>
-              <input id="s-start" name="start_date" type="date" aria-invalid={invalid('start_date')} />
-              {err('start_date')}
-            </div>
-            <div className="field">
-              <label htmlFor="s-end">Tanggal selesai</label>
-              <input id="s-end" name="end_date" type="date" aria-invalid={invalid('end_date')} />
-              {err('end_date')}
             </div>
             <div className="field">
               <label htmlFor="s-st">Jam mulai</label>

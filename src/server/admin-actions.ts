@@ -66,6 +66,7 @@ export async function approveSubmissionAction(
 
   const raw = formDataToObject(formData);
   raw.category_ids = formData.getAll('category_ids').map(String).filter(Boolean);
+  raw.dates = formData.getAll('dates').map(String).filter(Boolean);
 
   const parsed = eventSchema.safeParse(raw);
   if (!parsed.success) {
@@ -76,7 +77,7 @@ export async function approveSubmissionAction(
     };
   }
 
-  const { category_ids, ...event } = parsed.data;
+  const { category_ids, ...event } = parsed.data;   // `dates` stays on `event`
   const supabase = await createClient();
 
   const { data, error } = await supabase.rpc('approve_submission', {
@@ -132,13 +133,14 @@ export async function saveEventAction(_prev: ActionState, formData: FormData): P
 
   const raw = formDataToObject(formData);
   raw.category_ids = formData.getAll('category_ids').map(String).filter(Boolean);
+  raw.dates = formData.getAll('dates').map(String).filter(Boolean);
 
   const parsed = eventSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, message: 'Ada isian yang belum pas.', errors: fieldErrors(parsed.error) };
   }
 
-  const { category_ids, ...event } = parsed.data;
+  const { category_ids, dates, ...event } = parsed.data;
   const supabase = await createClient();
 
   let slug = String(formData.get('current_slug') ?? '');
@@ -162,6 +164,17 @@ export async function saveEventAction(_prev: ActionState, formData: FormData): P
     if (error) return { ok: false, message: `Gagal membuat event: ${error.message}` };
     id = data.id;
     slug = data.slug;
+  }
+
+  // Occurrence dates: one RPC replaces the whole set and re-syncs the
+  // start/end envelope. Idempotent, so saving twice changes nothing.
+  if (event.schedule_type === 'multiple') {
+    const { error: dateError } = await supabase.rpc('set_event_dates', {
+      p_event_id: id, p_dates: dates,
+    });
+    if (dateError) return { ok: false, message: `Gagal menyimpan tanggal: ${dateError.message}` };
+  } else {
+    await supabase.rpc('set_event_dates', { p_event_id: id, p_dates: [] });
   }
 
   // categories: replace the set

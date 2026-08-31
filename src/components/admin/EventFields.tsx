@@ -4,11 +4,14 @@ import { useState } from 'react';
 import PosterUploader from './PosterUploader';
 import OrganizerPicker from './OrganizerPicker';
 import LocationPicker from '../LocationPicker';
+import ScheduleFields from '../ScheduleFields';
 import { AUDIENCES, DISTRICTS } from '@/lib/constants';
 import type { CategoryRow, OrganizerRow } from '@/lib/types';
 
 export interface EventDefaults {
   title?: string;
+  schedule_type?: 'single' | 'range' | 'multiple' | null;
+  dates?: string[];
   slug?: string | null;
   description?: string | null;
   organizer_id?: string | null;
@@ -66,6 +69,18 @@ export default function EventFields({
         <p className="hint">Teks biasa. Tidak ada HTML yang dirender, jadi aman dari script.</p>
       </div>
 
+      {/* Jenis Jadwal — the one shared schedule control, also used by the
+          submission review editor and the public contributor form. It renders
+          its own .field / .formgrid blocks, so it sits outside the details
+          grid below rather than nested inside it. */}
+      <ScheduleFields idPrefix="f" errors={errors}
+        defaults={{
+          schedule_type: defaults.schedule_type,
+          start_date: defaults.start_date,
+          end_date: defaults.end_date,
+          dates: defaults.dates,
+        }} />
+
       <div className="formgrid">
         <OrganizerPicker organizers={organizers} defaultValue={defaults.organizer_id} />
 
@@ -76,18 +91,6 @@ export default function EventFields({
           <p className="hint">Kosongkan untuk otomatis. Kalau bentrok, database menambah -2.</p>
         </div>
 
-        <div className="field">
-          <label htmlFor="f-start">Tanggal mulai *</label>
-          <input id="f-start" name="start_date" type="date"
-            defaultValue={defaults.start_date ?? ''} aria-invalid={invalid('start_date')} required />
-          {err('start_date')}
-        </div>
-        <div className="field">
-          <label htmlFor="f-end">Tanggal selesai</label>
-          <input id="f-end" name="end_date" type="date" defaultValue={defaults.end_date ?? ''}
-            aria-invalid={invalid('end_date')} />
-          {err('end_date')}
-        </div>
 
         <div className="field">
           <label htmlFor="f-st">Jam mulai</label>

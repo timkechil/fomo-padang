@@ -20,7 +20,7 @@ export default async function EditEventPage({
   const [result, reference] = await Promise.all([getAdminEvent(id), getAdminReference()]);
   if (!result) notFound();
 
-  const { event, categoryIds } = result;
+  const { event, categoryIds, dates } = result;
 
   return (
     <>
@@ -29,7 +29,7 @@ export default async function EditEventPage({
         <div className="wrap" style={{ maxWidth: 880 }}>
           <EventForm eventId={event.id} slug={event.slug} saved={Boolean(sp.saved)}
             categories={reference.categories} organizers={reference.organizers}
-            defaults={{ ...event, category_ids: categoryIds }} />
+            defaults={{ ...event, category_ids: categoryIds, dates }} />
 
           {session.profile.role === 'admin' ? (
             <DangerZone eventId={event.id} eventTitle={event.title} />

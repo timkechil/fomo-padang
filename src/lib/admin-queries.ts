@@ -94,9 +94,10 @@ export async function listAdminEvents(filter: AdminEventFilter = 'upcoming'): Pr
 
 export async function getAdminEvent(id: string) {
   const supabase = await createClient();
-  const [{ data: event, error }, { data: cats }] = await Promise.all([
+  const [{ data: event, error }, { data: cats }, { data: dates }] = await Promise.all([
     supabase.from('events').select('*').eq('id', id).maybeSingle(),
     supabase.from('event_categories').select('category_id, is_primary').eq('event_id', id),
+    supabase.from('event_dates').select('event_date').eq('event_id', id).order('event_date'),
   ]);
   if (error) throw error;
   if (!event) return null;
@@ -105,6 +106,7 @@ export async function getAdminEvent(id: string) {
     categoryIds: (cats ?? [])
       .sort((a, b) => Number(b.is_primary) - Number(a.is_primary))
       .map((c) => (c as { category_id: string }).category_id),
+    dates: (dates ?? []).map((d) => (d as { event_date: string }).event_date),
   };
 }
 

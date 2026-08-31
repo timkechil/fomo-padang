@@ -665,3 +665,27 @@ footer.site .logo-img{height:30px}
   padding:12px 14px;font:inherit;font-weight:600;font-size:14px;cursor:pointer;min-height:44px;
 }
 .locsearch-list button:hover,.locsearch-list button:focus-visible{background:var(--paper-2)}
+
+/* Multiple-date events: the compact schedule line on a card. */
+.card-schedule{font-weight:800;color:var(--ink)}
+
+/* Jenis Jadwal — multiple date picker (admin + contributor). */
+.datelist{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.datelist li{
+  display:inline-flex;align-items:center;gap:8px;background:var(--paper-2);
+  border:var(--line);border-radius:var(--r);padding:8px 8px 8px 12px;
+  font-weight:700;font-size:13.5px;min-height:44px;
+}
+.datelist li button{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border:1.5px solid var(--ink);border-radius:50%;
+  background:#fff;cursor:pointer;color:var(--ink);flex:none;
+}
+.datelist li button:hover{background:#C4331F;color:#fff;border-color:#C4331F}
+.dateadd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dateadd input{flex:1;min-width:150px}
+@media (max-width:860px){
+  .datelist li{width:100%;justify-content:space-between}
+  .dateadd{flex-direction:column;align-items:stretch}
+  .dateadd .btn{width:100%;justify-content:center}
+}

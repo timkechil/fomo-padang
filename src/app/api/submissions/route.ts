@@ -103,6 +103,10 @@ export async function POST(request: NextRequest) {
       instagram_url: data.instagram_url,
       registration_required: data.registration_required,
       audience: data.audience,
+      schedule_type: data.schedule_type,
+      occurrence_dates: data.schedule_type === 'multiple' && data.dates.length
+        ? data.dates
+        : null,
       contributor_name: data.contributor_name,
       contributor_contact: data.contributor_contact,
       submitted_ip_hash: ipHash,

@@ -6,6 +6,7 @@ export type EventStatus = 'draft' | 'published' | 'cancelled' | 'archived';
 export type PlaceStatus = 'draft' | 'published' | 'temporarily_closed' | 'archived';
 export type SubmissionStatus = 'pending' | 'needs_revision' | 'approved' | 'rejected';
 export type PriceType = 'free' | 'paid';
+export type ScheduleType = 'single' | 'range' | 'multiple';
 export type StaffRole = 'admin' | 'editor';
 
 export interface CategoryRow {
@@ -39,6 +40,8 @@ export interface EventRow {
   end_date: string | null;
   /** generated column: coalesce(end_date, start_date) */
   effective_end_date: string;
+  /** single | range | multiple (V1.3 multiple dates) */
+  schedule_type: ScheduleType;
   start_time: string | null;
   end_time: string | null;
   venue_name: string | null;
@@ -121,6 +124,8 @@ export interface SubmissionRow {
   poster_url: string | null;
   registration_required: boolean | null;
   audience: string | null;
+  schedule_type: ScheduleType;
+  occurrence_dates: string[] | null;
   contributor_name: string | null;
   contributor_contact: string | null;
   status: SubmissionStatus;
@@ -184,6 +189,8 @@ export interface EventCategoryLite {
 }
 
 export interface EventView extends EventRow {
+  /** Occurrence dates, ascending. Populated for schedule_type 'multiple'. */
+  dates: string[];
   organizer: Pick<OrganizerRow, 'id' | 'name' | 'slug' | 'instagram_url' | 'website_url'> | null;
   categories: EventCategoryLite[];
 }

@@ -30,7 +30,11 @@ export default function ReviewSubmission({
   const submitted: [string, string | null][] = [
     ['Nama event', s.event_name],
     ['Penyelenggara', s.organizer_name],
-    ['Tanggal', s.start_date ? `${s.start_date}${s.end_date && s.end_date !== s.start_date ? ` – ${s.end_date}` : ''}` : null],
+    ['Jenis jadwal', s.schedule_type === 'multiple' ? 'Beberapa tanggal'
+      : s.schedule_type === 'range' ? 'Rentang tanggal' : 'Satu tanggal'],
+    ['Tanggal', s.schedule_type === 'multiple' && s.occurrence_dates?.length
+      ? s.occurrence_dates.join(', ')
+      : s.start_date ? `${s.start_date}${s.end_date && s.end_date !== s.start_date ? ` – ${s.end_date}` : ''}` : null],
     ['Jam', s.start_time ? `${s.start_time.slice(0, 5)}${s.end_time ? `–${s.end_time.slice(0, 5)}` : ''}` : null],
     ['Tempat', s.venue_name],
     ['Alamat', s.address],
@@ -75,6 +79,8 @@ export default function ReviewSubmission({
                     title: s.event_name,
                     description: s.description,
                     category_ids: s.category_id ? [s.category_id] : [],
+                    schedule_type: s.schedule_type,
+                    dates: s.occurrence_dates ?? [],
                     start_date: s.start_date,
                     end_date: s.end_date,
                     start_time: s.start_time,

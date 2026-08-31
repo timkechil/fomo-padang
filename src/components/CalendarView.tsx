@@ -6,6 +6,7 @@ import { DOW, MON, MONL, fmtPrice, fmtTime, isFree, parseISODate, toISODate } fr
 import { categoryColor, primaryCategory } from '@/lib/event-view';
 import type { CategoryRow, EventView } from '@/lib/types';
 import { holidayMapForMonth, holidayOn } from '@/lib/holidays';
+import { occurrenceDates, occursOn } from '@/lib/schedule';
 
 interface Props {
   events: EventView[];
@@ -42,8 +43,8 @@ export default function CalendarView({
   for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(y, m - 1, d, 12));
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const onDay = (iso: string) =>
-    events.filter((e) => e.start_date <= iso && (e.end_date ?? e.start_date) >= iso);
+  // Exact occurrence match: a multiple-date event lands only on its real days.
+  const onDay = (iso: string) => events.filter((e) => occursOn(e, iso));
 
   // V1.2 §10 — national holidays are a separate layer, never events.
   const holidays = holidayMapForMonth(month);
@@ -55,18 +56,10 @@ export default function CalendarView({
 
   const agendaDays = new Map<string, EventView[]>();
   events.forEach((e) => {
-    let cur = e.start_date;
-    const end = e.end_date ?? e.start_date;
-    let guard = 0;
-    while (cur <= end && guard < 60) {
-      if (cur >= today) {
-        if (!agendaDays.has(cur)) agendaDays.set(cur, []);
-        agendaDays.get(cur)!.push(e);
-      }
-      const d = parseISODate(cur);
-      d.setDate(d.getDate() + 1);
-      cur = toISODate(d);
-      guard++;
+    for (const cur of occurrenceDates(e)) {
+      if (cur < today) continue;
+      if (!agendaDays.has(cur)) agendaDays.set(cur, []);
+      agendaDays.get(cur)!.push(e);
     }
   });
 

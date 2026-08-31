@@ -5,7 +5,8 @@ import { setEventStatusAction } from '@/server/admin-actions';
 import PageHead from '@/components/PageHead';
 import EmptyState from '@/components/EmptyState';
 import { EVENT_STATUS_LABEL } from '@/lib/constants';
-import { fmtRange, isPast, todayWIB } from '@/lib/format';
+import { todayWIB } from '@/lib/format';
+import { formatSchedule, isFinished } from '@/lib/schedule';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,8 +78,8 @@ export default async function AdminEventsPage({ searchParams }: { searchParams: 
                         {e.submitted_from ? <><br /><span className="sec-note">dari kiriman komunitas</span></> : null}
                       </td>
                       <td className="sec-note">
-                        {fmtRange(e)}<br />
-                        {isPast(e, today) ? 'Sudah lewat' : 'Akan datang'}
+                        {formatSchedule(e)}<br />
+                        {isFinished(e, today) ? 'Sudah lewat' : 'Akan datang'}
                       </td>
                       <td className="sec-note">{e.venue_name ?? '—'}<br />{e.district ?? '—'}</td>
                       <td>

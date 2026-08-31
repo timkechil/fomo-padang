@@ -5,6 +5,32 @@ import {
 } from './format';
 export { primaryCategory } from './event-view';
 
+import { occursInRange, nextOccurrence, lastOccurrence } from './schedule';
+
+/**
+ * The database prefilters on start_date / effective_end_date, which for a
+ * 'multiple' event is only its first/last occurrence envelope. That envelope is
+ * indexed and cheap, but it would wrongly include the gaps between sessions —
+ * the exact bug this feature fixes. Every windowed query therefore passes its
+ * results through this final exact check.
+ */
+function keepOccurring<T extends { start_date: string; end_date: string | null;
+  schedule_type?: string | null; dates?: string[] | null }>(
+  rows: T[], from: string, to?: string | null,
+): T[] {
+  return rows.filter((e) => occursInRange(e as never, from, to));
+}
+
+/** Order by the occurrence a visitor actually cares about: the next one. */
+function byNextOccurrence<T extends { start_date: string; end_date: string | null;
+  schedule_type?: string | null; dates?: string[] | null }>(rows: T[], from: string): T[] {
+  return [...rows].sort((a, b) => {
+    const da = nextOccurrence(a as never, from) ?? lastOccurrence(a as never);
+    const db = nextOccurrence(b as never, from) ?? lastOccurrence(b as never);
+    return da.localeCompare(db);
+  });
+}
+
 import type {
   CategoryRow, EventView, MapPin, OrganizerRow, PlaceView, PublicFilters, SearchHit,
 } from './types';
@@ -16,7 +42,8 @@ const EVENT_SELECT = `
   venue_name, address, district, latitude, longitude,
   price_type, price_amount, ticket_url, source_url, instagram_url, poster_url,
   registration_required, audience, status, featured, submitted_from,
-  contributor_name, published_at, created_at, updated_at,
+  contributor_name, schedule_type, published_at, created_at, updated_at,
+  event_dates ( event_date ),
   organizer:organizers ( id, name, slug, instagram_url, website_url ),
   event_categories ( is_primary, categories ( id, name, slug, color ) )
 `;
@@ -24,6 +51,7 @@ const EVENT_SELECT = `
 type RawEvent = Record<string, unknown> & {
   organizer: OrganizerRow | OrganizerRow[] | null;
   event_categories: { is_primary: boolean; categories: CategoryRow | null }[] | null;
+  event_dates?: { event_date: string }[] | null;
 };
 
 function shapeEvent(row: RawEvent): EventView {
@@ -39,8 +67,10 @@ function shapeEvent(row: RawEvent): EventView {
     }))
     .sort((a, b) => Number(b.is_primary) - Number(a.is_primary));
 
-  const { event_categories: _drop, ...rest } = row;
-  return { ...(rest as unknown as EventView), organizer, categories };
+  const dates = (row.event_dates ?? []).map((d) => d.event_date).sort();
+
+  const { event_categories: _drop, event_dates: _dropDates, ...rest } = row;
+  return { ...(rest as unknown as EventView), organizer, categories, dates };
 }
 
 /* ------------------------------------------------------------------ *
@@ -100,11 +130,16 @@ export async function getEventsInRange(opts: RangeOpts = {}): Promise<EventView[
     .order('start_time', { ascending: true, nullsFirst: true });
 
   if (opts.to) q = q.lte('start_date', opts.to);
-  if (opts.limit) q = q.limit(opts.limit);
+  // Fetch a little wider than requested: the exact per-day filter below can
+  // drop envelope-only matches, and we still want a full page of results.
+  if (opts.limit) q = q.limit(opts.limit * 3);
 
   const { data, error } = await q;
   if (error) throw error;
-  return (data as unknown as RawEvent[]).map(shapeEvent);
+
+  const shaped = (data as unknown as RawEvent[]).map(shapeEvent);
+  const exact = byNextOccurrence(keepOccurring(shaped, from, opts.to), from);
+  return opts.limit ? exact.slice(0, opts.limit) : exact;
 }
 
 export async function getTodayEvents(limit = 12): Promise<EventView[]> {
@@ -126,9 +161,12 @@ export async function getFreeEvents(limit = 8): Promise<EventView[]> {
     .eq('price_type', 'free')
     .gte('effective_end_date', todayWIB())
     .order('start_date')
-    .limit(limit);
+    .limit(limit * 3);
   if (error) throw error;
-  return (data as unknown as RawEvent[]).map(shapeEvent);
+  const today = todayWIB();
+  return byNextOccurrence(
+    keepOccurring((data as unknown as RawEvent[]).map(shapeEvent), today), today,
+  ).slice(0, limit);
 }
 
 export async function getFeaturedEvents(limit = 8): Promise<EventView[]> {
@@ -140,9 +178,12 @@ export async function getFeaturedEvents(limit = 8): Promise<EventView[]> {
     .eq('featured', true)
     .gte('effective_end_date', todayWIB())
     .order('start_date')
-    .limit(limit);
+    .limit(limit * 3);
   if (error) throw error;
-  return (data as unknown as RawEvent[]).map(shapeEvent);
+  const today = todayWIB();
+  return byNextOccurrence(
+    keepOccurring((data as unknown as RawEvent[]).map(shapeEvent), today), today,
+  ).slice(0, limit);
 }
 
 export async function getNearbyEvents(district: string, limit = 4): Promise<EventView[]> {
@@ -154,9 +195,12 @@ export async function getNearbyEvents(district: string, limit = 4): Promise<Even
     .eq('district', district)
     .gte('effective_end_date', todayWIB())
     .order('start_date')
-    .limit(limit);
+    .limit(limit * 3);
   if (error) throw error;
-  return (data as unknown as RawEvent[]).map(shapeEvent);
+  const today = todayWIB();
+  return byNextOccurrence(
+    keepOccurring((data as unknown as RawEvent[]).map(shapeEvent), today), today,
+  ).slice(0, limit);
 }
 
 /** Resolves the Explore/Search filter state into one Supabase query. */
@@ -207,9 +251,12 @@ export async function getFilteredEvents(f: PublicFilters, limit = 60): Promise<E
   const { data, error } = await q
     .order('start_date')
     .order('start_time', { nullsFirst: true })
-    .limit(limit);
+    .limit(limit * 3);
   if (error) throw error;
-  return (data as unknown as RawEvent[]).map(shapeEvent);
+
+  const shaped = (data as unknown as RawEvent[]).map(shapeEvent);
+  const anchor = windowStart ?? today;
+  return byNextOccurrence(keepOccurring(shaped, anchor, windowEnd), anchor).slice(0, limit);
 }
 
 export async function getEventBySlug(slug: string): Promise<EventView | null> {
@@ -244,14 +291,17 @@ export async function getRelatedEvents(e: EventView, limit = 3): Promise<EventVi
     .neq('id', e.id)
     .gte('effective_end_date', todayWIB())
     .order('start_date')
-    .limit(limit);
+    .limit(limit * 3);
 
   if (ids.length) q = q.in('id', ids);
   else if (e.district) q = q.eq('district', e.district);
 
   const { data, error } = await q;
   if (error) throw error;
-  return (data as unknown as RawEvent[]).map(shapeEvent);
+  const today = todayWIB();
+  return byNextOccurrence(
+    keepOccurring((data as unknown as RawEvent[]).map(shapeEvent), today), today,
+  ).slice(0, limit);
 }
 
 /* ------------------------------------------------------------------ *
@@ -279,7 +329,9 @@ export async function getMonthEvents(month: string, catSlug?: string): Promise<E
 
   const { data, error } = await q;
   if (error) throw error;
-  return (data as unknown as RawEvent[]).map(shapeEvent);
+  // Keep anything with at least one occurrence inside the month; the grid then
+  // places it only on its real days via occursOn().
+  return keepOccurring((data as unknown as RawEvent[]).map(shapeEvent), first, last);
 }
 
 /* ------------------------------------------------------------------ *
@@ -353,8 +405,9 @@ export async function getMapPins(f: PublicFilters & { includePlaces?: boolean } 
 
   let q = supabase
     .from('events')
-    .select(`id, slug, title, latitude, longitude, start_date, start_time, venue_name,
-             poster_url, price_type, price_amount,
+    .select(`id, slug, title, latitude, longitude, start_date, end_date, schedule_type,
+             start_time, venue_name, poster_url, price_type, price_amount,
+             event_dates ( event_date ),
              event_categories ( is_primary, categories ( name, color ) )`)
     .eq('status', 'published')
     .not('latitude', 'is', null)
@@ -374,13 +427,30 @@ export async function getMapPins(f: PublicFilters & { includePlaces?: boolean } 
   const { data, error } = await q;
   if (error) throw error;
 
-  const eventPins: MapPin[] = (data ?? []).map((row) => {
-    const r = row as unknown as {
-      id: string; slug: string; title: string; latitude: number; longitude: number;
-      start_date: string; start_time: string | null; venue_name: string | null;
-      poster_url: string | null; price_type: 'free' | 'paid'; price_amount: number | null;
-      event_categories: { is_primary: boolean; categories: { name: string; color: string } | null }[] | null;
-    };
+  type RawPin = {
+    id: string; slug: string; title: string; latitude: number; longitude: number;
+    start_date: string; end_date: string | null; schedule_type: 'single' | 'range' | 'multiple';
+    start_time: string | null; venue_name: string | null;
+    poster_url: string | null; price_type: 'free' | 'paid'; price_amount: number | null;
+    event_dates?: { event_date: string }[] | null;
+    event_categories: { is_primary: boolean; categories: { name: string; color: string } | null }[] | null;
+  };
+
+  // Same exact-occurrence rule as the lists: a multiple-date event must not pin
+  // itself onto the map on a day it does not actually run.
+  const withinWindow = (data ?? []).filter((row) => {
+    const r = row as unknown as RawPin;
+    return occursInRange(
+      {
+        start_date: r.start_date, end_date: r.end_date, schedule_type: r.schedule_type,
+        dates: (r.event_dates ?? []).map((d) => d.event_date).sort(),
+      },
+      windowStart, windowEnd,
+    );
+  });
+
+  const eventPins: MapPin[] = withinWindow.map((row) => {
+    const r = row as unknown as RawPin;
     const cat = (r.event_categories ?? []).find((c) => c.is_primary)?.categories
       ?? (r.event_categories ?? [])[0]?.categories
       ?? null;

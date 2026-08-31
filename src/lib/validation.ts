@@ -74,6 +74,18 @@ const audienceEnum = z
   .optional()
   .transform((v) => (v ? v : null));
 
+const scheduleType = z.enum(['single', 'range', 'multiple']).default('single');
+
+/** `dates` arrives as repeated form fields, so it can be a single string. */
+const dateList = z
+  .union([z.array(isoDate), isoDate, z.literal('')])
+  .optional()
+  .transform((v) => {
+    if (!v || v === '') return [] as string[];
+    const arr = Array.isArray(v) ? v : [v];
+    return [...new Set(arr)].sort();
+  });
+
 const checkbox = z
   .union([z.boolean(), z.literal('on'), z.literal('true'), z.literal('false'), z.literal('')])
   .optional()
@@ -95,6 +107,8 @@ export const submissionSchema = z
     organizer_name: optionalText(160),
     category_id: optionalUuid,
 
+    schedule_type: scheduleType,
+    dates: dateList,
     start_date: optionalDate,
     end_date: optionalDate,
     start_time: optionalTime,
@@ -133,6 +147,10 @@ export const submissionSchema = z
     message: 'Tanggal selesai tidak boleh sebelum tanggal mulai',
     path: ['end_date'],
   })
+  .refine((v) => v.schedule_type !== 'multiple' || v.dates.length > 0, {
+    message: 'Pilih minimal satu tanggal acaranya',
+    path: ['dates'],
+  })
   .refine((v) => v.price_type !== 'paid' || v.price_amount !== null, {
     message: 'Isi nominal harga kalau acaranya berbayar',
     path: ['price_amount'],
@@ -147,6 +165,8 @@ export type SubmissionInput = z.infer<typeof submissionSchema>;
 export const eventSchema = z
   .object({
     title: z.string().trim().min(3, 'Judul minimal 3 karakter').max(180),
+    schedule_type: scheduleType,
+    dates: dateList,
     slug: optionalText(120),
     description: optionalText(8000),
 
@@ -184,6 +204,14 @@ export const eventSchema = z
   .refine((v) => v.price_type !== 'paid' || v.price_amount !== null, {
     message: 'Event berbayar wajib punya nominal harga',
     path: ['price_amount'],
+  })
+  .refine((v) => v.schedule_type !== 'multiple' || v.dates.length > 0, {
+    message: 'Pilih minimal satu tanggal untuk jadwal Beberapa Tanggal',
+    path: ['dates'],
+  })
+  .refine((v) => v.schedule_type !== 'multiple' || v.dates.length <= 60, {
+    message: 'Maksimal 60 tanggal per event',
+    path: ['dates'],
   });
 
 export type EventInput = z.infer<typeof eventSchema>;

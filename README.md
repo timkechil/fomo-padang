@@ -183,6 +183,30 @@ New in this revision:
   `logo-fomo-padang-original.png` is the untouched file.
   `public/og-fomo-padang.png` is the supplied social preview, unmodified.
 
+## Multiple / non-consecutive event dates
+
+Migration `0007_v13_multiple_event_dates.sql`. Three schedule types:
+
+| `schedule_type` | Meaning | Where the dates live |
+| --- | --- | --- |
+| `single` | one day | `start_date` |
+| `range` | every day, inclusive | `start_date` → `end_date` |
+| `multiple` | only the listed days | `event_dates` rows |
+
+Existing rows need no edit: a trigger derives `single`/`range` from `end_date`,
+and the backfill already set it for current production data.
+
+For `multiple`, `start_date`/`end_date` are kept in sync as the first/last
+occurrence **envelope**. That is deliberate — every existing indexed query
+still prefilters on it cheaply, and "Acara sudah selesai" keys off the last
+occurrence for free. Exact per-day matching is then applied on top, in
+`src/lib/schedule.ts`. Never reintroduce `start_date <= day <= end_date` as the
+final test: that is the bug this feature fixes.
+
+All date logic lives in `src/lib/schedule.ts` — `occursOn`, `occursInRange`,
+`nextOccurrence`, `lastOccurrence`, `isFinished`, `formatSchedule`. Use it
+rather than re-deriving the rule per page.
+
 ## Timezone
 
 Everything the product calls "today" is Padang time. `todayWIB()` formats
