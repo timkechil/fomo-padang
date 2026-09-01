@@ -689,3 +689,72 @@ footer.site .logo-img{height:30px}
   .dateadd{flex-direction:column;align-items:stretch}
   .dateadd .btn{width:100%;justify-content:center}
 }
+
+/* ============ V1.4: KASIH INFO CHOOSER ============ */
+
+/* Desktop nav trigger: matches the surrounding nav links exactly. */
+.navcta{
+  background:none;border:0;padding:0;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:14.5px;letter-spacing:.01em;
+  color:var(--white);position:relative;
+}
+.navcta:hover{color:var(--orange)}
+
+.sheet-backdrop{
+  position:fixed;inset:0;z-index:1400;background:rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  animation:sheetFade .14s ease-out;
+}
+.sheet{
+  width:100%;max-width:460px;background:var(--paper);border:var(--line);
+  border-radius:var(--r);box-shadow:6px 6px 0 var(--ink);overflow:hidden;
+}
+.sheet-head{
+  display:flex;align-items:flex-start;gap:14px;justify-content:space-between;
+  padding:20px 20px 14px;border-bottom:1.5px solid var(--ink);
+}
+.sheet-head h2{
+  font-family:var(--ff-display);text-transform:uppercase;font-size:clamp(24px,5vw,32px);
+  line-height:.92;margin:0;
+}
+.sheet-head p{margin:6px 0 0;font-weight:600;font-size:13.5px;color:var(--ink-soft)}
+.sheet-close{
+  flex:none;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--ink);border-radius:50%;background:var(--white);cursor:pointer;color:var(--ink);
+}
+.sheet-close:hover{background:var(--orange);color:#fff}
+.sheet-options{display:flex;flex-direction:column}
+.sheet-option{
+  display:flex;align-items:center;gap:14px;padding:18px 20px;color:inherit;
+  background:var(--paper);min-height:76px;
+}
+.sheet-option + .sheet-option{border-top:1.5px solid var(--ink)}
+.sheet-option:hover,.sheet-option:focus-visible{background:var(--white)}
+.sheet-option:focus-visible{outline:3px solid var(--orange);outline-offset:-3px}
+.so-icon{
+  flex:none;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;
+  background:var(--orange);color:#fff;border:1.5px solid var(--ink);border-radius:var(--r);
+}
+.so-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+.so-label{font-family:var(--ff-display);text-transform:uppercase;font-size:20px;line-height:1}
+.so-desc{font-weight:600;font-size:12.5px;color:var(--ink-soft);line-height:1.35}
+.so-arrow{margin-left:auto;flex:none;color:var(--ink)}
+
+@keyframes sheetFade{from{opacity:0}to{opacity:1}}
+
+/* Mobile: a bottom sheet that clears the fixed nav and the iPhone safe area. */
+@media (max-width:860px){
+  .sheet-backdrop{align-items:flex-end;padding:0}
+  .sheet{
+    max-width:none;border-radius:var(--r) var(--r) 0 0;border-bottom:0;box-shadow:none;
+    max-height:86vh;overflow-y:auto;
+    padding-bottom:calc(env(safe-area-inset-bottom) + 8px);
+    animation:sheetUp .18s ease-out;
+  }
+  .sheet-option{padding:18px 16px}
+  .sheet-head{padding:18px 16px 12px}
+}
+@keyframes sheetUp{from{transform:translateY(12%)}to{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){
+  .sheet-backdrop,.sheet{animation:none}
+}

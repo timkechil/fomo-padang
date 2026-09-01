@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Icon from './Icon';
+import KasihInfoTrigger from './KasihInfoTrigger';
 import { getPlan, PLAN_EVENT } from '@/lib/plan';
 
 const ITEMS = [
@@ -49,7 +50,9 @@ export default function BottomNav() {
           </Link>
         ))}
       </nav>
-      <Link className="fab" href="/submit"><Icon name="plus" size={18} /> Kasih Info</Link>
+      {/* V1.4 §2 — the sticky global CTA now opens the Event/Tempat chooser
+          instead of jumping straight into the event form. */}
+      <KasihInfoTrigger variant="fab" />
     </>
   );
 }

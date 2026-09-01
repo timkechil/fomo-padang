@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Logo from './Logo';
 import Icon from './Icon';
+import KasihInfoTrigger from './KasihInfoTrigger';
 
 const NAV = [
   { href: '/', label: 'Explore' },
@@ -11,7 +12,6 @@ const NAV = [
   { href: '/map', label: 'Peta' },
   { href: '/places', label: 'Tempat' },
   { href: '/plan', label: 'Rencana' },
-  { href: '/submit', label: 'Kasih Info Event' },
 ];
 
 export default function TopBar() {
@@ -40,6 +40,9 @@ export default function TopBar() {
               {n.label}
             </Link>
           ))}
+          {/* Same chooser as the mobile FAB, so the desktop entry point
+              reaches both forms too. */}
+          <KasihInfoTrigger variant="nav" />
         </nav>
         <div className="topbar-actions">
           <button className="icon-btn" onClick={focusSearch} aria-label="Cari" type="button">
